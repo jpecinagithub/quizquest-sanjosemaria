@@ -16,6 +16,7 @@ export const SUBJECTS: Subject[] = [
     name: 'San Josemaria (Logrono 1915-1925)',
     icon: 'school',
     color: 'emerald-500',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
     description: 'Adolescencia y formacion en Logrono',
     quizCount: 12,
     progress: 0,

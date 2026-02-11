@@ -19,6 +19,7 @@ export interface Subject {
   name: string;
   icon: string;
   color: string;
+  imageUrl?: string;
   description: string;
   quizCount: number;
   progress: number;

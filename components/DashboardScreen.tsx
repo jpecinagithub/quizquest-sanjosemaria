@@ -14,6 +14,9 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
+  const subjectImageById: Record<string, string> = {
+    josemaria_logrono_1915_1925: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -66,15 +69,26 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
         <div>
           <h2 className="text-xl font-bold mb-4">Asignaturas</h2>
           <div className="grid grid-cols-2 gap-4">
-            {displaySubjects.map((subject) => (
+            {displaySubjects.map((subject) => {
+              const cardImage = subject.imageUrl || subjectImageById[subject.id];
+              return (
               <div 
                 key={subject.id}
                 onClick={() => onStartQuiz(subject)}
                 className={`bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 flex flex-col items-center text-center transition-all active:scale-95 cursor-pointer hover:border-primary/50`}
               >
-                <div className={`w-14 h-14 bg-opacity-20 rounded-full flex items-center justify-center mb-4 text-primary bg-primary`}>
-                  <span className="material-icons-outlined text-3xl">{subject.icon}</span>
-                </div>
+                {cardImage ? (
+                  <img
+                    src={cardImage}
+                    alt={subject.name}
+                    className="w-20 h-20 rounded-xl object-cover mb-4 border border-slate-600/60"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className={`w-14 h-14 bg-opacity-20 rounded-full flex items-center justify-center mb-4 text-primary bg-primary`}>
+                    <span className="material-icons-outlined text-3xl">{subject.icon}</span>
+                  </div>
+                )}
                 <h3 className="font-bold text-lg mb-1">{subject.name}</h3>
                 <p className="text-xs text-slate-400 mb-4">{subject.description}</p>
                 <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
@@ -85,7 +99,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
                 </div>
                 <span className="text-[10px] mt-2 font-medium uppercase text-slate-500">Practicar ahora</span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
