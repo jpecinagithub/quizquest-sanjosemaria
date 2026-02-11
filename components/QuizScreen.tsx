@@ -115,9 +115,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
       <footer className="px-6 py-8 flex items-center justify-between">
         <button 
           onClick={handleNext}
-          className="flex items-center space-x-2 text-slate-400 font-semibold px-4 py-2 hover:bg-slate-800 rounded-lg transition-colors"
+          className="text-slate-400 font-semibold px-4 py-2 hover:bg-slate-800 rounded-lg transition-colors"
         >
-          <span className="material-icons text-sm">skip_next</span>
           <span>Saltar pregunta</span>
         </button>
         <button 
