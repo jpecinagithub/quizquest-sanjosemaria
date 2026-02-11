@@ -1,0 +1,8 @@
+
+{
+  "name": "QuizQuest - AI Powered Learning",
+  "description": "A gamified quiz application with multiple subjects, AI-generated challenges, and progress tracking.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,0 +1,67 @@
+@baseUrl = http://localhost:3001/api
+
+### 1) Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "alex@quizquest.com",
+  "password": "1234"
+}
+
+### 2) Register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "New Player",
+  "email": "newplayer@quizquest.com",
+  "password": "123456"
+}
+
+### 3) Forgot Password (simulado)
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "alex@quizquest.com"
+}
+
+### Copia el token de login/register y pegalo aqui:
+@authToken = REEMPLAZAR_TOKEN
+
+### 4) Obtener usuario autenticado actual
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 5) Obtener perfil de usuario por ID (mismo usuario del token)
+GET {{baseUrl}}/user/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 6) Obtener todas las asignaturas con progreso del usuario autenticado
+GET {{baseUrl}}/subjects
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 7) Guardar resultado de quiz (actualiza XP)
+POST {{baseUrl}}/quiz/finish
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "userId": 1,
+  "subjectId": "josemaria_zaragoza_1920_1927",
+  "score": 90,
+  "xpEarned": 45
+}
+
+### 8) Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{authToken}}
+Accept: application/json
