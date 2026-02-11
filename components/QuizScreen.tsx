@@ -81,14 +81,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
           <p className="text-xl md:text-2xl font-medium leading-relaxed">
             {currentQuestion.text}
           </p>
-          <div className="mt-6 w-full h-32 rounded-lg overflow-hidden relative">
-            <img 
-              alt="Context" 
-              className="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-500" 
-              src={`https://picsum.photos/seed/${state.subject.id}-${currentIndex}/800/400`}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background-dark/40 to-transparent"></div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
