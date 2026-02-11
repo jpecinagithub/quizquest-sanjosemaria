@@ -259,46 +259,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           </span>
         </button>
 
-        {!isForgotMode && (
-          <>
-            <div className="flex items-center gap-4 py-2">
-              <div className="h-px flex-1 bg-slate-800"></div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">o entra con</span>
-              <div className="h-px flex-1 bg-slate-800"></div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <button type="button" className="flex items-center justify-center bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 rounded-xl py-3 transition-colors">
-                <img alt="Google" className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC52dLrmUtqlIRFf3tFxs2xxOWskYMijk-dJak3sQfZL-TLg_QD2FwILZsOx9wiQ_hQaE4cymlpNwuIenOeSBbZA947V5KZpTPMX9BQBOshcckkoV9iQqmc4U4l9cQg_R4G9fcgMxdIIq59__caS1Dx7hIkjdvGBqc2YXg2V0iOGWlm0cMvzsUMID8R08D2Nf-R-ltlYPt_XvVj_gYHKCPnx8AEr3-5OboIZFjTC0EBwIVDNEROjWssuQmIshsYo0328MFzn8lp7LmI" />
-              </button>
-              <button type="button" className="flex items-center justify-center bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 rounded-xl py-3 transition-colors">
-                <span className="material-icons-round text-white text-2xl">apple</span>
-              </button>
-              <button type="button" className="flex items-center justify-center bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 rounded-xl py-3 transition-colors">
-                <span className="material-icons-round text-[#5865F2] text-2xl">discord</span>
-              </button>
-            </div>
-          </>
-        )}
       </form>
-
-      <div className="mt-12 w-full">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] text-center mb-4">Domina cada asignatura</p>
-        <div className="flex justify-center gap-4 opacity-60">
-          <div className="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center text-accent-purple">
-            <span className="material-icons-round text-lg">history_edu</span>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center text-accent-cyan">
-            <span className="material-icons-round text-lg">functions</span>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <span className="material-icons-round text-lg">science</span>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
-            <span className="material-icons-round text-lg">auto_stories</span>
-          </div>
-        </div>
-      </div>
 
       <footer className="mt-auto pt-8 pb-4">
         <p className="text-sm text-slate-400">
