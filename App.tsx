@@ -40,6 +40,12 @@ const App: React.FC = () => {
   }, [isAuthenticated, currentScreen]);
 
   useEffect(() => {
+    if (isAuthenticated && currentScreen === Screen.LOGIN) {
+      setCurrentScreen(Screen.DASHBOARD);
+    }
+  }, [isAuthenticated, currentScreen]);
+
+  useEffect(() => {
     if (currentScreen === Screen.ADMIN && isAuthenticated && !(userProfile?.is_admin || user?.is_admin)) {
       setCurrentScreen(Screen.DASHBOARD);
     }
