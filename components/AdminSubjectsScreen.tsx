@@ -180,7 +180,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     try {
       await api.deleteAdminSubject(token, subjectId);
       if (editingId === subjectId) resetForm();
-      setNotice('Asignatura eliminada.');
+      setNotice('Asignatura desactivada.');
       await loadSubjects();
       await onSubjectsUpdated?.();
     } catch (err) {
@@ -304,7 +304,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
                       onClick={() => void handleDelete(subject.id)}
                       className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30"
                     >
-                      Eliminar
+                      Desactivar
                     </button>
                   ) : (
                     <button
