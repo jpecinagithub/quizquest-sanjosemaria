@@ -139,6 +139,12 @@ const createDbConnection = () => {
     });
 };
 
+const parseSubjectId = (value) => {
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) return null;
+    return parsed;
+};
+
 const db = createDbConnection();
 
 
@@ -324,35 +330,32 @@ app.get('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
 });
 
 app.post('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
-    const { id, name, description, image_url, activo } = req.body || {};
-    if (!id || !name) {
-        return res.status(400).json({ message: 'id y name son obligatorios' });
+    const { name, description, image_url, activo } = req.body || {};
+    if (!name) {
+        return res.status(400).json({ message: 'name es obligatorio' });
     }
 
     const sql = `
-        INSERT INTO subjects (id, name, description, image_url, activo)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO subjects (name, description, image_url, activo)
+        VALUES (?, ?, ?, ?)
     `;
     db.query(
         sql,
-        [String(id).trim(), String(name).trim(), description || null, image_url || null, activo === false ? 0 : 1],
-        (err) => {
+        [String(name).trim(), description || null, image_url || null, activo === false ? 0 : 1],
+        (err, result) => {
             if (err) {
-                if (err.code === 'ER_DUP_ENTRY') {
-                    return res.status(409).json({ message: 'Ya existe una asignatura con ese id' });
-                }
                 return res.status(500).json(err);
             }
-            return res.status(201).json({ success: true, message: 'Asignatura creada' });
+            return res.status(201).json({ success: true, message: 'Asignatura creada', id: Number(result.insertId) });
         }
     );
 });
 
 app.put('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
-    const subjectId = req.params.id;
+    const subjectId = parseSubjectId(req.params.id);
     const { name, description, image_url, activo } = req.body || {};
     if (!subjectId) {
-        return res.status(400).json({ message: 'id de asignatura requerido' });
+        return res.status(400).json({ message: 'id de asignatura invalido' });
     }
     if (!name) {
         return res.status(400).json({ message: 'name es obligatorio' });
@@ -377,10 +380,10 @@ app.put('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
 });
 
 app.post('/api/admin/subjects/:id/image', authRequired, adminRequired, (req, res) => {
-    const subjectId = req.params.id;
+    const subjectId = parseSubjectId(req.params.id);
     const { imageData } = req.body || {};
     if (!subjectId) {
-        return res.status(400).json({ message: 'id de asignatura requerido' });
+        return res.status(400).json({ message: 'id de asignatura invalido' });
     }
     if (!imageData || typeof imageData !== 'string') {
         return res.status(400).json({ message: 'imageData es requerido' });
@@ -454,9 +457,9 @@ app.post('/api/admin/subjects/:id/image', authRequired, adminRequired, (req, res
 });
 
 app.delete('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
-    const subjectId = req.params.id;
+    const subjectId = parseSubjectId(req.params.id);
     if (!subjectId) {
-        return res.status(400).json({ message: 'id de asignatura requerido' });
+        return res.status(400).json({ message: 'id de asignatura invalido' });
     }
 
     db.query('UPDATE subjects SET activo = 0 WHERE id = ? AND activo <> 0', [subjectId], (err, result) => {
@@ -604,9 +607,9 @@ app.get('/api/subjects', authRequired, (req, res) => {
 
 // 9. Verificar si el usuario puede iniciar quiz hoy en una asignatura
 app.get('/api/quiz/can-start/:subjectId', authRequired, (req, res) => {
-    const subjectId = req.params.subjectId;
+    const subjectId = parseSubjectId(req.params.subjectId);
     if (!subjectId) {
-        return res.status(400).json({ message: 'subjectId es requerido' });
+        return res.status(400).json({ message: 'subjectId invalido' });
     }
 
     getDailyAttemptsForSubject(req.auth.userId, subjectId, (err, attemptsToday) => {
@@ -624,7 +627,8 @@ app.get('/api/quiz/can-start/:subjectId', authRequired, (req, res) => {
 // 10. Guardar resultado de un quiz
 app.post('/api/quiz/finish', authRequired, (req, res) => {
     const { userId, subjectId, score, xpEarned, questions } = req.body;
-    if (!userId || !subjectId || typeof score !== 'number' || typeof xpEarned !== 'number') {
+    const normalizedSubjectId = parseSubjectId(subjectId);
+    if (!userId || !normalizedSubjectId || typeof score !== 'number' || typeof xpEarned !== 'number') {
         return res.status(400).json({ message: 'Body invalido para guardar resultado' });
     }
     if (Number(userId) !== req.auth.userId) {
@@ -634,7 +638,7 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
         return res.status(400).json({ message: 'questions debe ser un array' });
     }
 
-    getDailyAttemptsForSubject(userId, subjectId, (limitErr, attemptsToday) => {
+    getDailyAttemptsForSubject(userId, normalizedSubjectId, (limitErr, attemptsToday) => {
         if (limitErr) return res.status(500).json(limitErr);
         if (attemptsToday >= DAILY_QUIZ_LIMIT) {
             return res.status(429).json({
@@ -675,7 +679,7 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
             };
 
             const insertResult = 'INSERT INTO quiz_results (user_id, subject_id, score, xp_earned) VALUES (?, ?, ?, ?)';
-            db.query(insertResult, [userId, subjectId, score, xpEarned], (insertErr) => {
+            db.query(insertResult, [userId, normalizedSubjectId, score, xpEarned], (insertErr) => {
                 if (insertErr) return rollbackWith(insertErr);
 
                 const updateUserXp = 'UPDATE users SET total_xp = total_xp + ? WHERE id = ?';
@@ -707,7 +711,7 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
                     let pending = sanitizedQuestions.length;
                     for (const question of sanitizedQuestions) {
                         const params = [
-                            subjectId,
+                            normalizedSubjectId,
                             question.text,
                             question.options[0],
                             question.options[1],

@@ -65,22 +65,26 @@ const App: React.FC = () => {
       const profile = await api.fetchUserProfile(token, user.id);
 
       if (Array.isArray(dbSubjects)) {
-        const subjectsById = new Map<string, Subject>();
+        const subjectsById = new Map<number, Subject>();
         SUBJECTS.forEach((subject) => subjectsById.set(subject.id, subject));
 
         const activeSubjects: Subject[] = dbSubjects
           .filter((subject: any) => subject?.activo === undefined || Number(subject.activo) === 1)
-          .map((subject: any) => ({
-            ...(subjectsById.get(subject.id) || {
-              id: subject.id,
+          .map((subject: any) => {
+            const subjectId = Number(subject.id);
+            return ({
+            ...(subjectsById.get(subjectId) || {
+              id: subjectId,
               name: subject.name,
               description: subject.description || '',
               quizCount: 0,
               progress: 0,
             }),
             ...subject,
-            imageUrl: subject.image_url || subject.imageUrl || subjectsById.get(subject.id)?.imageUrl,
-          }));
+            id: subjectId,
+            imageUrl: subject.image_url || subject.imageUrl || subjectsById.get(subjectId)?.imageUrl,
+          });
+        });
 
         setSubjects(activeSubjects);
       } else {

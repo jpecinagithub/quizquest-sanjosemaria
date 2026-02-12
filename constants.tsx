@@ -3,14 +3,14 @@ import { Subject } from './types';
 
 export const SUBJECTS: Subject[] = [
   {
-    id: 'josemaria_1902_1915',
+    id: 1,
     name: 'San Josemaria (1902-1915)',
     description: 'Infancia en Barbastro',
     quizCount: 10,
     progress: 0,
   },
   {
-    id: 'josemaria_logrono_1915_1925',
+    id: 2,
     name: 'San Josemaria (Logrono 1915-1925)',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
     description: 'Adolescencia y formacion en Logrono',
@@ -18,14 +18,14 @@ export const SUBJECTS: Subject[] = [
     progress: 0,
   },
   {
-    id: 'josemaria_zaragoza_1920_1927',
+    id: 3,
     name: 'San Josemaria (Zaragoza 1920-1927)',
     description: 'Seminario y preparacion sacerdotal en Zaragoza',
     quizCount: 14,
     progress: 0,
   },
   {
-    id: 'josemaria_madrid_1927_1946',
+    id: 4,
     name: 'San Josemaria (Madrid 1927-1946)',
     description: 'Fundacion del Opus Dei y expansion inicial desde Madrid',
     quizCount: 16,
@@ -46,8 +46,8 @@ export const MOCK_CLASSIFICATION_BASE: Array<{ name: string; xp: number; profile
   { name: 'Hugo', xp: 3120, profile_pic: 'https://picsum.photos/seed/hugo/96' },
 ];
 
-export const MOCK_QUESTIONS: Record<string, any[]> = {
-  josemaria_1902_1915: [
+export const MOCK_QUESTIONS: Record<number, any[]> = {
+  1: [
     {
       id: 'sj1',
       text: '¿En que ano nacio San Josemaria Escriva de Balaguer?',
@@ -87,7 +87,7 @@ export const MOCK_QUESTIONS: Record<string, any[]> = {
       correctAnswerIndex: 1,
     }
   ],
-  josemaria_logrono_1915_1925: [
+  2: [
     {
       id: 'sjl1',
       text: '¿En que ciudad se centra esta etapa de la vida de San Josemaria entre 1915 y 1925?',
@@ -147,7 +147,7 @@ export const MOCK_QUESTIONS: Record<string, any[]> = {
       correctAnswerIndex: 0,
     }
   ],
-  josemaria_zaragoza_1920_1927: [
+  3: [
     {
       id: 'sjz1',
       text: '¿En que ciudad se desarrolla esta etapa entre 1920 y 1927?',
@@ -204,7 +204,7 @@ export const MOCK_QUESTIONS: Record<string, any[]> = {
       correctAnswerIndex: 0,
     }
   ],
-  josemaria_madrid_1927_1946: [
+  4: [
     {
       id: 'sjm1',
       text: '¿En que ciudad se centra la etapa de San Josemaria entre 1927 y 1946?',

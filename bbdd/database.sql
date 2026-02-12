@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Tabla de Asignaturas/Temas
 CREATE TABLE IF NOT EXISTS subjects (
-    id VARCHAR(50) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     image_url VARCHAR(255),
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS subjects (
 -- Tabla de Preguntas (para tener un banco base)
 CREATE TABLE IF NOT EXISTS questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    subject_id VARCHAR(50),
+    subject_id INT,
     question_text TEXT NOT NULL,
     option_a VARCHAR(255),
     option_b VARCHAR(255),
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS questions (
 CREATE TABLE IF NOT EXISTS quiz_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
-    subject_id VARCHAR(50),
+    subject_id INT,
     score INT,
     xp_earned INT,
     completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS quiz_results (
 
 -- Asignatura adicional: San Josemaria (Barbastro 1902-1915)
 INSERT INTO subjects (id, name, description, image_url, activo)
-VALUES ('josemaria_1902_1915', 'San Josemaria (1902-1915)', 'Infancia en Barbastro', NULL, 1)
+VALUES (1, 'San Josemaria (1902-1915)', 'Infancia en Barbastro', NULL, 1)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   description = VALUES(description),
@@ -62,7 +62,7 @@ ON DUPLICATE KEY UPDATE
 
 -- Asignatura adicional: San Josemaria (Logrono 1915-1925)
 INSERT INTO subjects (id, name, description, image_url, activo)
-VALUES ('josemaria_logrono_1915_1925', 'San Josemaria (Logrono 1915-1925)', 'Adolescencia y formacion en Logrono', NULL, 1)
+VALUES (2, 'San Josemaria (Logrono 1915-1925)', 'Adolescencia y formacion en Logrono', NULL, 1)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   description = VALUES(description),
@@ -71,7 +71,7 @@ ON DUPLICATE KEY UPDATE
 
 -- Asignatura adicional: San Josemaria (Zaragoza 1920-1927)
 INSERT INTO subjects (id, name, description, image_url, activo)
-VALUES ('josemaria_zaragoza_1920_1927', 'San Josemaria (Zaragoza 1920-1927)', 'Seminario y preparacion sacerdotal en Zaragoza', NULL, 1)
+VALUES (3, 'San Josemaria (Zaragoza 1920-1927)', 'Seminario y preparacion sacerdotal en Zaragoza', NULL, 1)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   description = VALUES(description),
@@ -80,12 +80,14 @@ ON DUPLICATE KEY UPDATE
 
 -- Asignatura adicional: San Josemaria (Madrid 1927-1946)
 INSERT INTO subjects (id, name, description, image_url, activo)
-VALUES ('josemaria_madrid_1927_1946', 'San Josemaria (Madrid 1927-1946)', 'Fundacion del Opus Dei y expansion inicial desde Madrid', NULL, 1)
+VALUES (4, 'San Josemaria (Madrid 1927-1946)', 'Fundacion del Opus Dei y expansion inicial desde Madrid', NULL, 1)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   description = VALUES(description),
   image_url = VALUES(image_url),
   activo = VALUES(activo);
+
+ALTER TABLE subjects AUTO_INCREMENT = 5;
 
 -- Usuario administrador fijo (sin tabla de roles)
 INSERT INTO users (id, name, email, password, total_xp)

@@ -9,23 +9,21 @@ interface AdminSubjectsScreenProps {
 }
 
 interface AdminSubjectForm {
-  id: string;
   name: string;
   description: string;
 }
 
 const EMPTY_FORM: AdminSubjectForm = {
-  id: '',
   name: '',
   description: '',
 };
 
 const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack, onSubjectsUpdated }) => {
-  const [subjects, setSubjects] = React.useState<Array<{ id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }>>([]);
+  const [subjects, setSubjects] = React.useState<Array<{ id: number; name: string; description?: string; image_url?: string; activo?: number | boolean }>>([]);
   const [form, setForm] = React.useState<AdminSubjectForm>(EMPTY_FORM);
   const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingId, setEditingId] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -102,10 +100,6 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     event.preventDefault();
     setError(null);
     setNotice(null);
-    if (!form.id.trim() && !editingId) {
-      setError('El id es obligatorio.');
-      return;
-    }
     if (!form.name.trim()) {
       setError('El nombre es obligatorio.');
       return;
@@ -124,16 +118,14 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
         }
         setNotice('Asignatura actualizada.');
       } else {
-        const newSubjectId = form.id.trim();
-        await api.createAdminSubject(token, {
-          id: newSubjectId,
+        const created = await api.createAdminSubject(token, {
           name: form.name.trim(),
           description: form.description.trim() || undefined,
           activo: true,
         });
         if (selectedImageFile) {
           const imageData = await fileToDataUrl(selectedImageFile);
-          await api.uploadAdminSubjectImage(token, newSubjectId, imageData);
+          await api.uploadAdminSubjectImage(token, created.id, imageData);
         }
         setNotice('Asignatura creada.');
       }
@@ -148,10 +140,9 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     }
   };
 
-  const handleEdit = (subject: { id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }) => {
+  const handleEdit = (subject: { id: number; name: string; description?: string; image_url?: string; activo?: number | boolean }) => {
     setEditingId(subject.id);
     setForm({
-      id: subject.id,
       name: subject.name || '',
       description: subject.description || '',
     });
@@ -161,7 +152,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     setNotice(null);
   };
 
-  const handleActivate = async (subject: { id: string; name: string; description?: string; image_url?: string }) => {
+  const handleActivate = async (subject: { id: number; name: string; description?: string; image_url?: string }) => {
     setError(null);
     setNotice(null);
     setSaving(true);
@@ -182,7 +173,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     }
   };
 
-  const handleDelete = async (subjectId: string) => {
+  const handleDelete = async (subjectId: number) => {
     setError(null);
     setNotice(null);
     setSaving(true);
@@ -219,14 +210,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
       </header>
 
       <form className="space-y-3 bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 mb-6" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            className="bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 px-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
-            placeholder="id"
-            value={form.id}
-            disabled={Boolean(editingId)}
-            onChange={(e) => setForm((prev) => ({ ...prev, id: e.target.value }))}
-          />
+        <div className="grid grid-cols-1 gap-3">
           <input
             className="bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 px-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
             placeholder="nombre"
@@ -294,7 +278,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">{subject.name}</p>
-                  <p className="text-xs text-slate-400">{subject.id}</p>
+                  <p className="text-xs text-slate-400">ID {subject.id}</p>
                   <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 ${subject.activo ? 'text-emerald-300' : 'text-amber-300'}`}>
                     {subject.activo ? 'Activo' : 'Inactivo'}
                   </p>

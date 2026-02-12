@@ -18,7 +18,7 @@ export interface Question {
 }
 
 export interface Subject {
-  id: string;
+  id: number;
   name: string;
   imageUrl?: string;
   description: string;

@@ -80,7 +80,7 @@ export const fetchSubjects = async (token: string) => {
 export const saveQuizResult = async (
   token: string,
   userId: number,
-  subjectId: string,
+  subjectId: number,
   score: number,
   xpEarned: number,
   questions?: Array<{
@@ -99,7 +99,7 @@ export const saveQuizResult = async (
 
 export const fetchQuizDailyStatus = async (
   token: string,
-  subjectId: string
+  subjectId: number
 ): Promise<{ allowed: boolean; attemptsToday: number; dailyLimit: number; remaining: number }> => {
   return apiFetch(`/quiz/can-start/${subjectId}`, { token });
 };
@@ -129,14 +129,14 @@ export const changePassword = async (
 };
 
 export const fetchAdminSubjects = async (token: string) => {
-  return apiFetch<Array<{ id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }>>('/admin/subjects', { token });
+  return apiFetch<Array<{ id: number; name: string; description?: string; image_url?: string; activo?: number | boolean }>>('/admin/subjects', { token });
 };
 
 export const createAdminSubject = async (
   token: string,
-  payload: { id: string; name: string; description?: string; activo?: boolean }
+  payload: { name: string; description?: string; activo?: boolean }
 ) => {
-  return apiFetch<{ success: boolean; message: string }>('/admin/subjects', {
+  return apiFetch<{ success: boolean; message: string; id: number }>('/admin/subjects', {
     method: 'POST',
     token,
     body: payload,
@@ -145,7 +145,7 @@ export const createAdminSubject = async (
 
 export const updateAdminSubject = async (
   token: string,
-  subjectId: string,
+  subjectId: number,
   payload: { name: string; description?: string; activo?: boolean }
 ) => {
   return apiFetch<{ success: boolean; message: string }>(`/admin/subjects/${subjectId}`, {
@@ -155,7 +155,7 @@ export const updateAdminSubject = async (
   });
 };
 
-export const deleteAdminSubject = async (token: string, subjectId: string) => {
+export const deleteAdminSubject = async (token: string, subjectId: number) => {
   return apiFetch<{ success: boolean; message: string }>(`/admin/subjects/${subjectId}`, {
     method: 'DELETE',
     token,
@@ -164,7 +164,7 @@ export const deleteAdminSubject = async (token: string, subjectId: string) => {
 
 export const uploadAdminSubjectImage = async (
   token: string,
-  subjectId: string,
+  subjectId: number,
   imageData: string
 ): Promise<{ success: boolean; image_url: string }> => {
   return apiFetch(`/admin/subjects/${subjectId}/image`, {

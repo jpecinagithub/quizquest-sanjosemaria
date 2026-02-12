@@ -18,8 +18,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
-  const subjectImageById: Record<string, string> = {
-    josemaria_logrono_1915_1925: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
+  const subjectImageById: Record<number, string> = {
+    2: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
   };
 
   return (
