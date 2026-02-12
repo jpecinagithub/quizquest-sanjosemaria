@@ -87,5 +87,18 @@ ON DUPLICATE KEY UPDATE
   image_url = VALUES(image_url),
   activo = VALUES(activo);
 
-INSERT INTO users (name, email, password, total_xp) VALUES 
-('Alex', 'alex@quizquest.com', 'hashed_password_here', 1250);
+-- Usuario administrador fijo (sin tabla de roles)
+INSERT INTO users (id, name, email, password, total_xp)
+VALUES (1, 'Jon', 'jpecina@gmail.com', 'sha256:8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 0)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  email = VALUES(email),
+  password = VALUES(password);
+
+-- Usuario de prueba
+INSERT INTO users (name, email, password, total_xp)
+VALUES ('Alex', 'alex@quizquest.com', 'hashed_password_here', 1250)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  password = VALUES(password),
+  total_xp = VALUES(total_xp);

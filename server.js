@@ -16,19 +16,15 @@ const sessions = new Map();
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 8);
 const DAILY_QUIZ_LIMIT = 2;
 const ADMIN_USER_RULE = {
-    id: 7,
+    id: 1,
     name: 'Jon',
-    email: 'jpecina@gmail.com',
-    passwordHash: 'sha256:8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
 };
 
 const isAdminUser = (userRow) => {
     if (!userRow) return false;
     const idMatches = Number(userRow.id) === ADMIN_USER_RULE.id;
     const nameMatches = String(userRow.name || '') === ADMIN_USER_RULE.name;
-    const emailMatches = String(userRow.email || '').toLowerCase() === ADMIN_USER_RULE.email.toLowerCase();
-    const passwordMatches = String(userRow.password || '') === ADMIN_USER_RULE.passwordHash;
-    return idMatches && nameMatches && emailMatches && passwordMatches;
+    return idMatches && nameMatches;
 };
 
 const sanitizeUser = (userRow) => ({
