@@ -92,3 +92,23 @@ export const saveQuizResult = async (
 export const fetchUserProfile = async (token: string, userId: number) => {
   return apiFetch(`/user/${userId}`, { token });
 };
+
+export const uploadProfilePicture = async (token: string, imageData: string): Promise<{ success: boolean; profile_pic: string }> => {
+  return apiFetch('/user/profile-pic', {
+    method: 'POST',
+    token,
+    body: { imageData },
+  });
+};
+
+export const changePassword = async (
+  token: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch('/user/change-password', {
+    method: 'POST',
+    token,
+    body: { currentPassword, newPassword },
+  });
+};

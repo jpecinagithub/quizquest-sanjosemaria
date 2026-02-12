@@ -217,11 +217,55 @@ const App: React.FC = () => {
     setCurrentScreen(Screen.DASHBOARD);
   };
 
-  const handleSaveSettingsLocal = (profilePic: string | null) => {
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error('No se pudo leer la imagen seleccionada.'));
+      };
+      reader.onerror = () => reject(new Error('No se pudo leer la imagen seleccionada.'));
+      reader.readAsDataURL(file);
+    });
+
+  const handleUploadProfilePic = async (file: File): Promise<string> => {
+    if (!token) {
+      throw new Error('Sesion invalida. Vuelve a iniciar sesion.');
+    }
+
+    const imageData = await fileToDataUrl(file);
+    const response = await api.uploadProfilePicture(token, imageData);
     setUserProfile((prev) => ({
       ...(prev || user || ({} as AuthUser)),
-      profile_pic: profilePic,
+      profile_pic: response.profile_pic,
     }));
+    return response.profile_pic;
+  };
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    if (!token) {
+      throw new Error('Sesion invalida. Vuelve a iniciar sesion.');
+    }
+
+    try {
+      await api.changePassword(token, currentPassword, newPassword);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          throw new Error('La contrasena actual no es correcta.');
+        }
+        if (error.status === 400) {
+          throw new Error(error.message || 'Datos invalidos para cambiar la contrasena.');
+        }
+        if (error.status && error.status >= 500) {
+          throw new Error('Error interno al cambiar la contrasena.');
+        }
+      }
+      throw error instanceof Error ? error : new Error('No se pudo cambiar la contrasena.');
+    }
   };
 
   return (
@@ -264,7 +308,8 @@ const App: React.FC = () => {
           <SettingsScreen
             userData={userProfile || user}
             onBack={handleBackFromSettings}
-            onSaveLocal={handleSaveSettingsLocal}
+            onUploadProfilePic={handleUploadProfilePic}
+            onChangePassword={handleChangePassword}
           />
         )}
         {isAuthenticated && currentScreen === Screen.QUIZ && quizState && (
