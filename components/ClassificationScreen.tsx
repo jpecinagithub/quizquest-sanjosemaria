@@ -1,0 +1,97 @@
+import React from 'react';
+import { AuthUser } from '../types';
+
+interface ClassificationScreenProps {
+  onBack: () => void;
+  userData?: AuthUser | null;
+}
+
+const MOCK_TOP_USERS: Array<{ name: string; xp: number; profile_pic: string }> = [
+  { name: 'Maria', xp: 4820, profile_pic: 'https://picsum.photos/seed/maria/96' },
+  { name: 'Carlos', xp: 4510, profile_pic: 'https://picsum.photos/seed/carlos/96' },
+  { name: 'Lucia', xp: 4300, profile_pic: 'https://picsum.photos/seed/lucia/96' },
+  { name: 'Andres', xp: 4110, profile_pic: 'https://picsum.photos/seed/andres/96' },
+  { name: 'Elena', xp: 3980, profile_pic: 'https://picsum.photos/seed/elena/96' },
+  { name: 'Pablo', xp: 3720, profile_pic: 'https://picsum.photos/seed/pablo/96' },
+  { name: 'Sofia', xp: 3590, profile_pic: 'https://picsum.photos/seed/sofia/96' },
+  { name: 'Miguel', xp: 3400, profile_pic: 'https://picsum.photos/seed/miguel/96' },
+  { name: 'Laura', xp: 3260, profile_pic: 'https://picsum.photos/seed/laura/96' },
+  { name: 'Hugo', xp: 3120, profile_pic: 'https://picsum.photos/seed/hugo/96' },
+];
+
+const ClassificationScreen: React.FC<ClassificationScreenProps> = ({ onBack, userData }) => {
+  const currentUserName = userData?.name?.trim();
+  const currentUserXp = Number(userData?.total_xp || 0);
+
+  const ranking = React.useMemo(() => {
+    const rows = [...MOCK_TOP_USERS];
+    if (currentUserName) {
+      const exists = rows.some((row) => row.name.toLowerCase() === currentUserName.toLowerCase());
+      if (!exists) {
+        rows.push({
+          name: currentUserName,
+          xp: currentUserXp,
+          profile_pic: userData?.profile_pic || `https://picsum.photos/seed/${encodeURIComponent(currentUserName)}/96`,
+        });
+      }
+    }
+    return rows
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, 10);
+  }, [currentUserName, currentUserXp]);
+
+  return (
+    <main className="flex-1 px-6 pt-6 pb-10">
+      <header className="flex items-center justify-between mb-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-10 h-10 rounded-xl border border-slate-700/60 bg-slate-800/50 text-slate-300 hover:text-white hover:border-primary/50 transition-colors"
+          aria-label="Volver"
+          title="Volver"
+        >
+          <span className="material-icons-outlined text-lg">arrow_back</span>
+        </button>
+        <div className="text-right">
+          <h1 className="text-xl font-bold">Clasificacion</h1>
+          <p className="text-xs text-slate-400">Top 10 de usuarios</p>
+        </div>
+      </header>
+
+      <section className="bg-slate-800/40 border border-slate-700/50 rounded-xl overflow-hidden">
+        {ranking.map((row, index) => {
+          const position = index + 1;
+          const isCurrentUser = Boolean(currentUserName) && row.name.toLowerCase() === currentUserName.toLowerCase();
+          return (
+            <div
+              key={`${row.name}-${position}`}
+              className={`flex items-center justify-between px-4 py-3 border-b border-slate-700/40 last:border-b-0 ${
+                isCurrentUser ? 'bg-primary/10' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-slate-700/70 flex items-center justify-center text-sm font-bold text-slate-200">
+                  {position}
+                </div>
+                <img
+                  src={isCurrentUser && userData?.profile_pic ? userData.profile_pic : row.profile_pic}
+                  alt={row.name}
+                  className="w-10 h-10 rounded-full object-cover border border-slate-600/60"
+                />
+                <div>
+                  <p className="font-semibold">{row.name}</p>
+                  {isCurrentUser && <p className="text-[10px] text-primary uppercase tracking-wider">Tu posicion</p>}
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-primary">{row.xp.toLocaleString()} XP</p>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    </main>
+  );
+};
+
+export default ClassificationScreen;

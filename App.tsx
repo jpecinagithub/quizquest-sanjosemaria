@@ -4,6 +4,7 @@ import { AuthUser, QuizState, Screen, Subject } from './types';
 import LoginScreen from './components/LoginScreen';
 import DashboardScreen from './components/DashboardScreen';
 import SettingsScreen from './components/SettingsScreen';
+import ClassificationScreen from './components/ClassificationScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 import { generateQuizQuestions } from './services/geminiService';
@@ -217,6 +218,14 @@ const App: React.FC = () => {
     setCurrentScreen(Screen.DASHBOARD);
   };
 
+  const handleOpenClassification = () => {
+    setCurrentScreen(Screen.CLASSIFICATION);
+  };
+
+  const handleBackFromClassification = () => {
+    setCurrentScreen(Screen.DASHBOARD);
+  };
+
   const fileToDataUrl = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -300,6 +309,7 @@ const App: React.FC = () => {
             onStartQuiz={handleStartQuiz} 
             onLogout={() => { void handleLogout(); }}
             onOpenSettings={handleOpenSettings}
+            onOpenClassification={handleOpenClassification}
             customSubjects={subjects.length > 0 ? subjects : undefined}
             userData={userProfile || user}
           />
@@ -310,6 +320,12 @@ const App: React.FC = () => {
             onBack={handleBackFromSettings}
             onUploadProfilePic={handleUploadProfilePic}
             onChangePassword={handleChangePassword}
+          />
+        )}
+        {isAuthenticated && currentScreen === Screen.CLASSIFICATION && (
+          <ClassificationScreen
+            onBack={handleBackFromClassification}
+            userData={userProfile || user}
           />
         )}
         {isAuthenticated && currentScreen === Screen.QUIZ && quizState && (

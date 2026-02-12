@@ -7,11 +7,12 @@ interface DashboardScreenProps {
   onStartQuiz: (subject: Subject) => void;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onOpenClassification: () => void;
   customSubjects?: Subject[];
   userData?: any;
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, customSubjects, userData }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, onOpenClassification, customSubjects, userData }) => {
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
@@ -127,9 +128,13 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
               <span className="material-icons-outlined text-white text-3xl">play_arrow</span>
             </button>
           </div>
-          <button className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-primary">
-            <span className="material-icons-outlined">notifications</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">Alertas</span>
+          <button
+            type="button"
+            onClick={onOpenClassification}
+            className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-primary"
+          >
+            <span className="material-icons-outlined">emoji_events</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Clasificacion</span>
           </button>
           <button
             type="button"
