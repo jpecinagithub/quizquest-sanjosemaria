@@ -2,7 +2,7 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createHash, randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -41,11 +41,7 @@ const extractBearerToken = (authorizationHeader = '') => {
     return authorizationHeader.slice(7).trim() || null;
 };
 
-const hashPassword = (rawPassword) => `sha256:${createHash('sha256').update(rawPassword).digest('hex')}`;
-const isPasswordMatch = (storedPassword, rawPassword) => {
-    const legacyMatch = storedPassword === 'hashed_password_here' && rawPassword === '1234';
-    return storedPassword === hashPassword(rawPassword) || storedPassword === rawPassword || legacyMatch;
-};
+const isPasswordMatch = (storedPassword, rawPassword) => storedPassword === rawPassword;
 
 const createSession = (userId) => {
     const token = randomUUID();
@@ -250,7 +246,7 @@ app.post('/api/auth/register', (req, res) => {
     }
 
     const insertSql = 'INSERT INTO users (name, email, password, total_xp) VALUES (?, ?, ?, 0)';
-    db.query(insertSql, [name, email, hashPassword(password)], (err, result) => {
+    db.query(insertSql, [name, email, password], (err, result) => {
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({ message: 'Ese email ya esta registrado' });
@@ -583,7 +579,7 @@ app.post('/api/user/change-password', authRequired, (req, res) => {
         }
 
         const updateSql = 'UPDATE users SET password = ? WHERE id = ?';
-        db.query(updateSql, [hashPassword(newPassword), userId], (updateErr) => {
+        db.query(updateSql, [newPassword, userId], (updateErr) => {
             if (updateErr) return res.status(500).json(updateErr);
             return res.json({ success: true, message: 'Contrasena actualizada correctamente' });
         });
