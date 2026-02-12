@@ -112,12 +112,16 @@ const getDailyAttemptsForSubject = (userId, subjectId, callback) => {
 };
 
 // Configuracion de la conexion a MySQL (Debes completar tus parametros en .env o aqui)
-const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '1234',
-    database: process.env.DB_NAME || 'quizquest_db'
-});
+const db = process.env.DB_URL
+  ? mysql.createConnection(process.env.DB_URL)
+  : mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '1234',
+      database: process.env.DB_NAME || 'quizquest_db',
+      port: Number(process.env.DB_PORT || 3306),
+    });
+
 
 db.connect(err => {
     if (err) {
