@@ -5,8 +5,6 @@ export const SUBJECTS: Subject[] = [
   {
     id: 'josemaria_1902_1915',
     name: 'San Josemaria (1902-1915)',
-    icon: 'church',
-    color: 'amber-500',
     description: 'Infancia en Barbastro',
     quizCount: 10,
     progress: 0,
@@ -14,8 +12,6 @@ export const SUBJECTS: Subject[] = [
   {
     id: 'josemaria_logrono_1915_1925',
     name: 'San Josemaria (Logrono 1915-1925)',
-    icon: 'school',
-    color: 'emerald-500',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Josemaria_Escriva.jpg',
     description: 'Adolescencia y formacion en Logrono',
     quizCount: 12,
@@ -24,8 +20,6 @@ export const SUBJECTS: Subject[] = [
   {
     id: 'josemaria_zaragoza_1920_1927',
     name: 'San Josemaria (Zaragoza 1920-1927)',
-    icon: 'account_balance',
-    color: 'amber-500',
     description: 'Seminario y preparacion sacerdotal en Zaragoza',
     quizCount: 14,
     progress: 0,
@@ -33,8 +27,6 @@ export const SUBJECTS: Subject[] = [
   {
     id: 'josemaria_madrid_1927_1946',
     name: 'San Josemaria (Madrid 1927-1946)',
-    icon: 'location_city',
-    color: 'rose-500',
     description: 'Fundacion del Opus Dei y expansion inicial desde Madrid',
     quizCount: 16,
     progress: 0,

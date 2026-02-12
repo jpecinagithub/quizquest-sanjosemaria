@@ -4,6 +4,7 @@ export enum Screen {
   DASHBOARD = 'DASHBOARD',
   SETTINGS = 'SETTINGS',
   CLASSIFICATION = 'CLASSIFICATION',
+  ADMIN = 'ADMIN',
   QUIZ = 'QUIZ',
   RESULTS = 'RESULTS'
 }
@@ -19,8 +20,6 @@ export interface Question {
 export interface Subject {
   id: string;
   name: string;
-  icon: string;
-  color: string;
   imageUrl?: string;
   description: string;
   quizCount: number;
@@ -43,4 +42,5 @@ export interface AuthUser {
   email: string;
   profile_pic?: string | null;
   total_xp: number;
+  is_admin?: boolean;
 }

@@ -18,9 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS subjects (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    icon VARCHAR(50),
-    color VARCHAR(50),
-    description TEXT
+    description TEXT,
+    image_url VARCHAR(255)
 );
 
 -- Tabla de Preguntas (para tener un banco base)
@@ -52,40 +51,36 @@ CREATE TABLE IF NOT EXISTS quiz_results (
 -- Datos iniciales de prueba
 
 -- Asignatura adicional: San Josemaria (Barbastro 1902-1915)
-INSERT INTO subjects (id, name, icon, color, description)
-VALUES ('josemaria_1902_1915', 'San Josemaria (1902-1915)', 'church', 'amber-500', 'Infancia en Barbastro')
+INSERT INTO subjects (id, name, description, image_url)
+VALUES ('josemaria_1902_1915', 'San Josemaria (1902-1915)', 'Infancia en Barbastro', NULL)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
-  icon = VALUES(icon),
-  color = VALUES(color),
-  description = VALUES(description);
+  description = VALUES(description),
+  image_url = VALUES(image_url);
 
 -- Asignatura adicional: San Josemaria (Logrono 1915-1925)
-INSERT INTO subjects (id, name, icon, color, description)
-VALUES ('josemaria_logrono_1915_1925', 'San Josemaria (Logrono 1915-1925)', 'school', 'emerald-500', 'Adolescencia y formacion en Logrono')
+INSERT INTO subjects (id, name, description, image_url)
+VALUES ('josemaria_logrono_1915_1925', 'San Josemaria (Logrono 1915-1925)', 'Adolescencia y formacion en Logrono', NULL)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
-  icon = VALUES(icon),
-  color = VALUES(color),
-  description = VALUES(description);
+  description = VALUES(description),
+  image_url = VALUES(image_url);
 
 -- Asignatura adicional: San Josemaria (Zaragoza 1920-1927)
-INSERT INTO subjects (id, name, icon, color, description)
-VALUES ('josemaria_zaragoza_1920_1927', 'San Josemaria (Zaragoza 1920-1927)', 'account_balance', 'amber-500', 'Seminario y preparacion sacerdotal en Zaragoza')
+INSERT INTO subjects (id, name, description, image_url)
+VALUES ('josemaria_zaragoza_1920_1927', 'San Josemaria (Zaragoza 1920-1927)', 'Seminario y preparacion sacerdotal en Zaragoza', NULL)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
-  icon = VALUES(icon),
-  color = VALUES(color),
-  description = VALUES(description);
+  description = VALUES(description),
+  image_url = VALUES(image_url);
 
 -- Asignatura adicional: San Josemaria (Madrid 1927-1946)
-INSERT INTO subjects (id, name, icon, color, description)
-VALUES ('josemaria_madrid_1927_1946', 'San Josemaria (Madrid 1927-1946)', 'location_city', 'rose-500', 'Fundacion del Opus Dei y expansion inicial desde Madrid')
+INSERT INTO subjects (id, name, description, image_url)
+VALUES ('josemaria_madrid_1927_1946', 'San Josemaria (Madrid 1927-1946)', 'Fundacion del Opus Dei y expansion inicial desde Madrid', NULL)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
-  icon = VALUES(icon),
-  color = VALUES(color),
-  description = VALUES(description);
+  description = VALUES(description),
+  image_url = VALUES(image_url);
 
 INSERT INTO users (name, email, password, total_xp) VALUES 
 ('Alex', 'alex@quizquest.com', 'hashed_password_here', 1250);

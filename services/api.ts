@@ -20,7 +20,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   token?: string;
   body?: unknown;
 }
@@ -123,5 +123,51 @@ export const changePassword = async (
     method: 'POST',
     token,
     body: { currentPassword, newPassword },
+  });
+};
+
+export const fetchAdminSubjects = async (token: string) => {
+  return apiFetch<Array<{ id: string; name: string; description?: string; image_url?: string }>>('/admin/subjects', { token });
+};
+
+export const createAdminSubject = async (
+  token: string,
+  payload: { id: string; name: string; description?: string }
+) => {
+  return apiFetch<{ success: boolean; message: string }>('/admin/subjects', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+};
+
+export const updateAdminSubject = async (
+  token: string,
+  subjectId: string,
+  payload: { name: string; description?: string }
+) => {
+  return apiFetch<{ success: boolean; message: string }>(`/admin/subjects/${subjectId}`, {
+    method: 'PUT',
+    token,
+    body: payload,
+  });
+};
+
+export const deleteAdminSubject = async (token: string, subjectId: string) => {
+  return apiFetch<{ success: boolean; message: string }>(`/admin/subjects/${subjectId}`, {
+    method: 'DELETE',
+    token,
+  });
+};
+
+export const uploadAdminSubjectImage = async (
+  token: string,
+  subjectId: string,
+  imageData: string
+): Promise<{ success: boolean; image_url: string }> => {
+  return apiFetch(`/admin/subjects/${subjectId}/image`, {
+    method: 'POST',
+    token,
+    body: { imageData },
   });
 };

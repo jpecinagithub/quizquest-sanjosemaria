@@ -5,6 +5,7 @@ import LoginScreen from './components/LoginScreen';
 import DashboardScreen from './components/DashboardScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ClassificationScreen from './components/ClassificationScreen';
+import AdminSubjectsScreen from './components/AdminSubjectsScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 import { generateQuizQuestions } from './services/geminiService';
@@ -39,6 +40,12 @@ const App: React.FC = () => {
   }, [isAuthenticated, currentScreen]);
 
   useEffect(() => {
+    if (currentScreen === Screen.ADMIN && isAuthenticated && !(userProfile?.is_admin || user?.is_admin)) {
+      setCurrentScreen(Screen.DASHBOARD);
+    }
+  }, [currentScreen, isAuthenticated, userProfile?.is_admin, user?.is_admin]);
+
+  useEffect(() => {
     if (isAuthenticated && currentScreen === Screen.DASHBOARD && user && token) {
       loadInitialData();
     }
@@ -54,7 +61,13 @@ const App: React.FC = () => {
       if (dbSubjects) {
         const mergedById = new Map<string, Subject>();
         SUBJECTS.forEach((subject) => mergedById.set(subject.id, subject));
-        dbSubjects.forEach((subject: Subject) => mergedById.set(subject.id, { ...mergedById.get(subject.id), ...subject }));
+        dbSubjects.forEach((subject: any) =>
+          mergedById.set(subject.id, {
+            ...mergedById.get(subject.id),
+            ...subject,
+            imageUrl: subject.image_url || subject.imageUrl || mergedById.get(subject.id)?.imageUrl,
+          })
+        );
         setSubjects(Array.from(mergedById.values()));
       } else {
         setSubjects(SUBJECTS);
@@ -284,6 +297,15 @@ const App: React.FC = () => {
     setCurrentScreen(Screen.DASHBOARD);
   };
 
+  const handleOpenAdmin = () => {
+    if (!(userProfile?.is_admin || user?.is_admin)) return;
+    setCurrentScreen(Screen.ADMIN);
+  };
+
+  const handleBackFromAdmin = () => {
+    setCurrentScreen(Screen.DASHBOARD);
+  };
+
   const fileToDataUrl = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -368,6 +390,7 @@ const App: React.FC = () => {
             onLogout={() => { void handleLogout(); }}
             onOpenSettings={handleOpenSettings}
             onOpenClassification={handleOpenClassification}
+            onOpenAdmin={handleOpenAdmin}
             customSubjects={subjects.length > 0 ? subjects : undefined}
             userData={userProfile || user}
             notice={dashboardNotice}
@@ -385,6 +408,13 @@ const App: React.FC = () => {
           <ClassificationScreen
             onBack={handleBackFromClassification}
             userData={userProfile || user}
+          />
+        )}
+        {isAuthenticated && currentScreen === Screen.ADMIN && token && (userProfile?.is_admin || user?.is_admin) && (
+          <AdminSubjectsScreen
+            token={token}
+            onBack={handleBackFromAdmin}
+            onSubjectsUpdated={loadInitialData}
           />
         )}
         {isAuthenticated && currentScreen === Screen.QUIZ && quizState && (

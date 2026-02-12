@@ -15,13 +15,29 @@ app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')))
 const sessions = new Map();
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 8);
 const DAILY_QUIZ_LIMIT = 2;
+const ADMIN_USER_RULE = {
+    id: 7,
+    name: 'Jon',
+    email: 'jpecina@gmail.com',
+    passwordHash: 'sha256:8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
+};
+
+const isAdminUser = (userRow) => {
+    if (!userRow) return false;
+    const idMatches = Number(userRow.id) === ADMIN_USER_RULE.id;
+    const nameMatches = String(userRow.name || '') === ADMIN_USER_RULE.name;
+    const emailMatches = String(userRow.email || '').toLowerCase() === ADMIN_USER_RULE.email.toLowerCase();
+    const passwordMatches = String(userRow.password || '') === ADMIN_USER_RULE.passwordHash;
+    return idMatches && nameMatches && emailMatches && passwordMatches;
+};
 
 const sanitizeUser = (userRow) => ({
     id: userRow.id,
     name: userRow.name,
     email: userRow.email,
     profile_pic: userRow.profile_pic,
-    total_xp: userRow.total_xp
+    total_xp: userRow.total_xp,
+    is_admin: isAdminUser(userRow),
 });
 
 const extractBearerToken = (authorizationHeader = '') => {
@@ -64,6 +80,26 @@ const authRequired = (req, res, next) => {
     next();
 };
 
+const adminRequired = (req, res, next) => {
+    const userId = req?.auth?.userId;
+    if (!userId) {
+        return res.status(401).json({ message: 'Sesion invalida o expirada' });
+    }
+
+    const sql = 'SELECT id, name, email, password FROM users WHERE id = ? LIMIT 1';
+    db.query(sql, [userId], (err, results) => {
+        if (err) return res.status(500).json(err);
+        if (!results.length) return res.status(401).json({ message: 'Sesion invalida o expirada' });
+
+        const user = results[0];
+        if (!isAdminUser(user)) {
+            return res.status(403).json({ message: 'No tienes permisos de administrador' });
+        }
+
+        next();
+    });
+};
+
 const getDailyAttemptsForSubject = (userId, subjectId, callback) => {
     const sql = `
         SELECT COUNT(*) AS attemptsToday
@@ -94,6 +130,36 @@ db.connect(err => {
     }
     console.log('Conectado exitosamente a la base de datos MySQL');
 });
+
+// Ensure optional column for subject images exists (compatible with MySQL versions without ADD COLUMN IF NOT EXISTS).
+const ensureSubjectsImageUrlColumn = () => {
+    const sqlCheck = `
+        SELECT COUNT(*) AS columnExists
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ?
+          AND TABLE_NAME = 'subjects'
+          AND COLUMN_NAME = 'image_url'
+    `;
+    const schemaName = process.env.DB_NAME || 'quizquest_db';
+
+    db.query(sqlCheck, [schemaName], (checkErr, results) => {
+        if (checkErr) {
+            console.error('No se pudo verificar la columna image_url en subjects:', checkErr.message);
+            return;
+        }
+
+        const exists = Number(results?.[0]?.columnExists || 0) > 0;
+        if (exists) return;
+
+        db.query('ALTER TABLE subjects ADD COLUMN image_url VARCHAR(255) NULL', (alterErr) => {
+            if (alterErr) {
+                console.error('No se pudo crear la columna image_url en subjects:', alterErr.message);
+            }
+        });
+    });
+};
+
+ensureSubjectsImageUrlColumn();
 
 // --- ENDPOINTS ---
 
@@ -169,7 +235,7 @@ app.post('/api/auth/logout', authRequired, (req, res) => {
 // 5. Usuario autenticado actual
 app.get('/api/auth/me', authRequired, (req, res) => {
     const userId = req.auth.userId;
-    const sql = 'SELECT id, name, email, profile_pic, total_xp FROM users WHERE id = ? LIMIT 1';
+    const sql = 'SELECT id, name, email, password, profile_pic, total_xp FROM users WHERE id = ? LIMIT 1';
     db.query(sql, [userId], (err, results) => {
         if (err) return res.status(500).json(err);
         if (!results.length) return res.status(401).json({ message: 'Sesion invalida' });
@@ -183,9 +249,194 @@ app.get('/api/user/:id', authRequired, (req, res) => {
     if (Number(userId) !== req.auth.userId) {
         return res.status(403).json({ message: 'No autorizado para ver este usuario' });
     }
-    db.query('SELECT name, total_xp, profile_pic FROM users WHERE id = ?', [userId], (err, results) => {
+    db.query('SELECT id, name, email, password, total_xp, profile_pic FROM users WHERE id = ?', [userId], (err, results) => {
         if (err) return res.status(500).json(err);
-        res.json(results[0]);
+        if (!results.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+        const row = results[0];
+        res.json({
+            name: row.name,
+            total_xp: row.total_xp,
+            profile_pic: row.profile_pic,
+            is_admin: isAdminUser(row),
+        });
+    });
+});
+
+// 7.3 Endpoints de administracion de asignaturas
+app.get('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
+    const sql = `
+        SELECT id, name, description, image_url
+        FROM subjects
+        ORDER BY name
+    `;
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        return res.json(results);
+    });
+});
+
+app.post('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
+    const { id, name, description, image_url } = req.body || {};
+    if (!id || !name) {
+        return res.status(400).json({ message: 'id y name son obligatorios' });
+    }
+
+    const sql = `
+        INSERT INTO subjects (id, name, description, image_url)
+        VALUES (?, ?, ?, ?)
+    `;
+    db.query(
+        sql,
+        [String(id).trim(), String(name).trim(), description || null, image_url || null],
+        (err) => {
+            if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(409).json({ message: 'Ya existe una asignatura con ese id' });
+                }
+                return res.status(500).json(err);
+            }
+            return res.status(201).json({ success: true, message: 'Asignatura creada' });
+        }
+    );
+});
+
+app.put('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
+    const subjectId = req.params.id;
+    const { name, description, image_url } = req.body || {};
+    if (!subjectId) {
+        return res.status(400).json({ message: 'id de asignatura requerido' });
+    }
+    if (!name) {
+        return res.status(400).json({ message: 'name es obligatorio' });
+    }
+
+    const sql = `
+        UPDATE subjects
+        SET name = ?, description = ?, image_url = ?
+        WHERE id = ?
+    `;
+    db.query(sql, [String(name).trim(), description || null, image_url || null, subjectId], (err, result) => {
+        if (err) return res.status(500).json(err);
+        if (!result.affectedRows) {
+            return res.status(404).json({ message: 'Asignatura no encontrada' });
+        }
+        return res.json({ success: true, message: 'Asignatura actualizada' });
+    });
+});
+
+app.post('/api/admin/subjects/:id/image', authRequired, adminRequired, (req, res) => {
+    const subjectId = req.params.id;
+    const { imageData } = req.body || {};
+    if (!subjectId) {
+        return res.status(400).json({ message: 'id de asignatura requerido' });
+    }
+    if (!imageData || typeof imageData !== 'string') {
+        return res.status(400).json({ message: 'imageData es requerido' });
+    }
+
+    const match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=]+)$/i);
+    if (!match) {
+        return res.status(400).json({ message: 'Formato de imagen no valido. Usa PNG, JPG/JPEG o WEBP.' });
+    }
+
+    const format = match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase();
+    const extByFormat = { png: 'png', jpeg: 'jpg', webp: 'webp' };
+    const ext = extByFormat[format] || 'jpg';
+    const base64Payload = match[2];
+    const buffer = Buffer.from(base64Payload, 'base64');
+    const maxSizeBytes = 300 * 1024;
+
+    if (!buffer.length) {
+        return res.status(400).json({ message: 'La imagen esta vacia' });
+    }
+    if (buffer.length > maxSizeBytes) {
+        return res.status(400).json({ message: 'La imagen no debe superar 300KB' });
+    }
+
+    const subjectsImagesDir = path.join(process.cwd(), 'public', 'images', 'subjects');
+    fs.mkdirSync(subjectsImagesDir, { recursive: true });
+
+    const fileName = `subject-${subjectId}-${Date.now()}.${ext}`;
+    const filePath = path.join(subjectsImagesDir, fileName);
+    const publicPath = `/images/subjects/${fileName}`;
+    const publicUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
+
+    try {
+        fs.writeFileSync(filePath, buffer);
+    } catch {
+        return res.status(500).json({ message: 'No se pudo guardar la imagen' });
+    }
+
+    db.query('SELECT image_url FROM subjects WHERE id = ? LIMIT 1', [subjectId], (selectErr, results) => {
+        if (selectErr) return res.status(500).json(selectErr);
+        if (!results.length) return res.status(404).json({ message: 'Asignatura no encontrada' });
+
+        const oldUrl = results[0]?.image_url;
+        let oldPath = oldUrl;
+        if (typeof oldPath === 'string' && oldPath.startsWith('http')) {
+            try {
+                oldPath = new URL(oldPath).pathname;
+            } catch {
+                oldPath = oldUrl;
+            }
+        }
+
+        db.query('UPDATE subjects SET image_url = ? WHERE id = ?', [publicUrl, subjectId], (updateErr) => {
+            if (updateErr) return res.status(500).json(updateErr);
+
+            if (oldPath && typeof oldPath === 'string' && oldPath.startsWith('/images/subjects/')) {
+                const oldFile = oldPath.replace('/images/subjects/', '');
+                const oldFilePath = path.join(subjectsImagesDir, oldFile);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                    } catch {
+                        // Ignore deletion issues for previous image.
+                    }
+                }
+            }
+
+            return res.json({ success: true, image_url: publicUrl });
+        });
+    });
+});
+
+app.delete('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
+    const subjectId = req.params.id;
+    if (!subjectId) {
+        return res.status(400).json({ message: 'id de asignatura requerido' });
+    }
+
+    db.beginTransaction((txErr) => {
+        if (txErr) return res.status(500).json(txErr);
+
+        db.query('DELETE FROM quiz_results WHERE subject_id = ?', [subjectId], (resultErr) => {
+            if (resultErr) {
+                return db.rollback(() => res.status(500).json(resultErr));
+            }
+
+            db.query('DELETE FROM questions WHERE subject_id = ?', [subjectId], (questionsErr) => {
+                if (questionsErr) {
+                    return db.rollback(() => res.status(500).json(questionsErr));
+                }
+
+                db.query('DELETE FROM subjects WHERE id = ?', [subjectId], (subjectErr, deleteResult) => {
+                    if (subjectErr) {
+                        return db.rollback(() => res.status(500).json(subjectErr));
+                    }
+                    if (!deleteResult.affectedRows) {
+                        return db.rollback(() => res.status(404).json({ message: 'Asignatura no encontrada' }));
+                    }
+
+                    db.commit((commitErr) => {
+                        if (commitErr) {
+                            return db.rollback(() => res.status(500).json(commitErr));
+                        }
+                        return res.json({ success: true, message: 'Asignatura eliminada' });
+                    });
+                });
+            });
+        });
     });
 });
 

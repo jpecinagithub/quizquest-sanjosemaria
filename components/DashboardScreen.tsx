@@ -8,12 +8,13 @@ interface DashboardScreenProps {
   onLogout: () => void;
   onOpenSettings: () => void;
   onOpenClassification: () => void;
+  onOpenAdmin: () => void;
   customSubjects?: Subject[];
   userData?: any;
   notice?: string | null;
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, onOpenClassification, customSubjects, userData, notice = null }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, onOpenClassification, onOpenAdmin, customSubjects, userData, notice = null }) => {
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
@@ -36,13 +37,24 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
             </div>
             <div>
               <h1 className="text-lg text-slate-100 font-bold">{displayName}</h1>
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                className="text-xs text-primary font-semibold hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
-              >
-                Settings
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  className="text-xs text-primary font-semibold hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
+                >
+                  Settings
+                </button>
+                {userData?.is_admin && (
+                  <button
+                    type="button"
+                    onClick={onOpenAdmin}
+                    className="text-xs text-emerald-300 font-semibold hover:text-emerald-200 transition-colors underline-offset-2 hover:underline"
+                  >
+                    Admin
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -99,8 +111,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
                     loading="lazy"
                   />
                 ) : (
-                  <div className={`w-14 h-14 bg-opacity-20 rounded-full flex items-center justify-center mb-4 text-primary bg-primary`}>
-                    <span className="material-icons-outlined text-3xl">{subject.icon}</span>
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-primary bg-primary/20 border border-primary/30">
+                    <span className="material-icons-outlined text-3xl">menu_book</span>
                   </div>
                 )}
                 <h3 className="font-bold text-lg mb-1">{subject.name}</h3>
