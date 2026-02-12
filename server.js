@@ -161,6 +161,35 @@ const ensureSubjectsImageUrlColumn = () => {
 
 ensureSubjectsImageUrlColumn();
 
+const ensureSubjectsActivoColumn = () => {
+    const sqlCheck = `
+        SELECT COUNT(*) AS columnExists
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ?
+          AND TABLE_NAME = 'subjects'
+          AND COLUMN_NAME = 'activo'
+    `;
+    const schemaName = process.env.DB_NAME || 'quizquest_db';
+
+    db.query(sqlCheck, [schemaName], (checkErr, results) => {
+        if (checkErr) {
+            console.error('No se pudo verificar la columna activo en subjects:', checkErr.message);
+            return;
+        }
+
+        const exists = Number(results?.[0]?.columnExists || 0) > 0;
+        if (exists) return;
+
+        db.query('ALTER TABLE subjects ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1', (alterErr) => {
+            if (alterErr) {
+                console.error('No se pudo crear la columna activo en subjects:', alterErr.message);
+            }
+        });
+    });
+};
+
+ensureSubjectsActivoColumn();
+
 // --- ENDPOINTS ---
 
 // 1. Login basico
@@ -265,7 +294,7 @@ app.get('/api/user/:id', authRequired, (req, res) => {
 // 7.3 Endpoints de administracion de asignaturas
 app.get('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
     const sql = `
-        SELECT id, name, description, image_url
+        SELECT id, name, description, image_url, activo
         FROM subjects
         ORDER BY name
     `;
@@ -276,18 +305,18 @@ app.get('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
 });
 
 app.post('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
-    const { id, name, description, image_url } = req.body || {};
+    const { id, name, description, image_url, activo } = req.body || {};
     if (!id || !name) {
         return res.status(400).json({ message: 'id y name son obligatorios' });
     }
 
     const sql = `
-        INSERT INTO subjects (id, name, description, image_url)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO subjects (id, name, description, image_url, activo)
+        VALUES (?, ?, ?, ?, ?)
     `;
     db.query(
         sql,
-        [String(id).trim(), String(name).trim(), description || null, image_url || null],
+        [String(id).trim(), String(name).trim(), description || null, image_url || null, activo === false ? 0 : 1],
         (err) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -302,7 +331,7 @@ app.post('/api/admin/subjects', authRequired, adminRequired, (req, res) => {
 
 app.put('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
     const subjectId = req.params.id;
-    const { name, description, image_url } = req.body || {};
+    const { name, description, image_url, activo } = req.body || {};
     if (!subjectId) {
         return res.status(400).json({ message: 'id de asignatura requerido' });
     }
@@ -312,16 +341,20 @@ app.put('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) => {
 
     const sql = `
         UPDATE subjects
-        SET name = ?, description = ?, image_url = ?
+        SET name = ?, description = ?, image_url = COALESCE(?, image_url), activo = ?
         WHERE id = ?
     `;
-    db.query(sql, [String(name).trim(), description || null, image_url || null, subjectId], (err, result) => {
+    db.query(
+        sql,
+        [String(name).trim(), description || null, image_url || null, activo === false ? 0 : 1, subjectId],
+        (err, result) => {
         if (err) return res.status(500).json(err);
         if (!result.affectedRows) {
             return res.status(404).json({ message: 'Asignatura no encontrada' });
         }
         return res.json({ success: true, message: 'Asignatura actualizada' });
-    });
+        }
+    );
 });
 
 app.post('/api/admin/subjects/:id/image', authRequired, adminRequired, (req, res) => {
@@ -407,35 +440,17 @@ app.delete('/api/admin/subjects/:id', authRequired, adminRequired, (req, res) =>
         return res.status(400).json({ message: 'id de asignatura requerido' });
     }
 
-    db.beginTransaction((txErr) => {
-        if (txErr) return res.status(500).json(txErr);
-
-        db.query('DELETE FROM quiz_results WHERE subject_id = ?', [subjectId], (resultErr) => {
-            if (resultErr) {
-                return db.rollback(() => res.status(500).json(resultErr));
+    db.query('UPDATE subjects SET activo = 0 WHERE id = ? AND activo <> 0', [subjectId], (err, result) => {
+        if (err) return res.status(500).json(err);
+        if (result.affectedRows > 0) {
+            return res.json({ success: true, message: 'Asignatura desactivada' });
+        }
+        db.query('SELECT id FROM subjects WHERE id = ? LIMIT 1', [subjectId], (checkErr, rows) => {
+            if (checkErr) return res.status(500).json(checkErr);
+            if (!rows.length) {
+                return res.status(404).json({ message: 'Asignatura no encontrada' });
             }
-
-            db.query('DELETE FROM questions WHERE subject_id = ?', [subjectId], (questionsErr) => {
-                if (questionsErr) {
-                    return db.rollback(() => res.status(500).json(questionsErr));
-                }
-
-                db.query('DELETE FROM subjects WHERE id = ?', [subjectId], (subjectErr, deleteResult) => {
-                    if (subjectErr) {
-                        return db.rollback(() => res.status(500).json(subjectErr));
-                    }
-                    if (!deleteResult.affectedRows) {
-                        return db.rollback(() => res.status(404).json({ message: 'Asignatura no encontrada' }));
-                    }
-
-                    db.commit((commitErr) => {
-                        if (commitErr) {
-                            return db.rollback(() => res.status(500).json(commitErr));
-                        }
-                        return res.json({ success: true, message: 'Asignatura eliminada' });
-                    });
-                });
-            });
+            return res.json({ success: true, message: 'Asignatura ya estaba desactivada' });
         });
     });
 });
@@ -560,6 +575,7 @@ app.get('/api/subjects', authRequired, (req, res) => {
         (SELECT MAX(score) FROM quiz_results WHERE subject_id = s.id AND user_id = ?) as best_score,
         (SELECT COUNT(*) FROM quiz_results WHERE subject_id = s.id AND user_id = ?) as attempts
         FROM subjects s
+        WHERE s.activo = 1
     `;
     db.query(sql, [req.auth.userId, req.auth.userId], (err, results) => {
         if (err) return res.status(500).json(err);

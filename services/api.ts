@@ -127,12 +127,12 @@ export const changePassword = async (
 };
 
 export const fetchAdminSubjects = async (token: string) => {
-  return apiFetch<Array<{ id: string; name: string; description?: string; image_url?: string }>>('/admin/subjects', { token });
+  return apiFetch<Array<{ id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }>>('/admin/subjects', { token });
 };
 
 export const createAdminSubject = async (
   token: string,
-  payload: { id: string; name: string; description?: string }
+  payload: { id: string; name: string; description?: string; activo?: boolean }
 ) => {
   return apiFetch<{ success: boolean; message: string }>('/admin/subjects', {
     method: 'POST',
@@ -144,7 +144,7 @@ export const createAdminSubject = async (
 export const updateAdminSubject = async (
   token: string,
   subjectId: string,
-  payload: { name: string; description?: string }
+  payload: { name: string; description?: string; activo?: boolean }
 ) => {
   return apiFetch<{ success: boolean; message: string }>(`/admin/subjects/${subjectId}`, {
     method: 'PUT',

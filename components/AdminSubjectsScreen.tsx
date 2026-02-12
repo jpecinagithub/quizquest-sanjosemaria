@@ -21,7 +21,7 @@ const EMPTY_FORM: AdminSubjectForm = {
 };
 
 const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack, onSubjectsUpdated }) => {
-  const [subjects, setSubjects] = React.useState<Array<{ id: string; name: string; description?: string; image_url?: string }>>([]);
+  const [subjects, setSubjects] = React.useState<Array<{ id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }>>([]);
   const [form, setForm] = React.useState<AdminSubjectForm>(EMPTY_FORM);
   const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
@@ -129,6 +129,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
           id: newSubjectId,
           name: form.name.trim(),
           description: form.description.trim() || undefined,
+          activo: true,
         });
         if (selectedImageFile) {
           const imageData = await fileToDataUrl(selectedImageFile);
@@ -147,7 +148,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     }
   };
 
-  const handleEdit = (subject: { id: string; name: string; description?: string; image_url?: string }) => {
+  const handleEdit = (subject: { id: string; name: string; description?: string; image_url?: string; activo?: number | boolean }) => {
     setEditingId(subject.id);
     setForm({
       id: subject.id,
@@ -158,6 +159,27 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
     setImagePreview(subject.image_url || null);
     setError(null);
     setNotice(null);
+  };
+
+  const handleActivate = async (subject: { id: string; name: string; description?: string; image_url?: string }) => {
+    setError(null);
+    setNotice(null);
+    setSaving(true);
+    try {
+      await api.updateAdminSubject(token, subject.id, {
+        name: subject.name,
+        description: subject.description,
+        activo: true,
+      });
+      setNotice('Asignatura activada.');
+      await loadSubjects();
+      await onSubjectsUpdated?.();
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else setError('No se pudo activar la asignatura.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (subjectId: string) => {
@@ -273,6 +295,9 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
                 <div>
                   <p className="font-semibold">{subject.name}</p>
                   <p className="text-xs text-slate-400">{subject.id}</p>
+                  <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 ${subject.activo ? 'text-emerald-300' : 'text-amber-300'}`}>
+                    {subject.activo ? 'Activo' : 'Inactivo'}
+                  </p>
                 </div>
                 {subject.image_url && (
                   <img
@@ -289,13 +314,23 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
                   >
                     Editar
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete(subject.id)}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30"
-                  >
-                    Eliminar
-                  </button>
+                  {subject.activo ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleDelete(subject.id)}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                    >
+                      Eliminar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleActivate(subject)}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                    >
+                      Activar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -58,17 +58,25 @@ const App: React.FC = () => {
       const dbSubjects = await api.fetchSubjects(token);
       const profile = await api.fetchUserProfile(token, user.id);
 
-      if (dbSubjects) {
-        const mergedById = new Map<string, Subject>();
-        SUBJECTS.forEach((subject) => mergedById.set(subject.id, subject));
-        dbSubjects.forEach((subject: any) =>
-          mergedById.set(subject.id, {
-            ...mergedById.get(subject.id),
+      if (Array.isArray(dbSubjects)) {
+        const subjectsById = new Map<string, Subject>();
+        SUBJECTS.forEach((subject) => subjectsById.set(subject.id, subject));
+
+        const activeSubjects: Subject[] = dbSubjects
+          .filter((subject: any) => subject?.activo === undefined || Number(subject.activo) === 1)
+          .map((subject: any) => ({
+            ...(subjectsById.get(subject.id) || {
+              id: subject.id,
+              name: subject.name,
+              description: subject.description || '',
+              quizCount: 0,
+              progress: 0,
+            }),
             ...subject,
-            imageUrl: subject.image_url || subject.imageUrl || mergedById.get(subject.id)?.imageUrl,
-          })
-        );
-        setSubjects(Array.from(mergedById.values()));
+            imageUrl: subject.image_url || subject.imageUrl || subjectsById.get(subject.id)?.imageUrl,
+          }));
+
+        setSubjects(activeSubjects);
       } else {
         setSubjects(SUBJECTS);
       }
@@ -85,7 +93,9 @@ const App: React.FC = () => {
         await logout();
         setCurrentScreen(Screen.LOGIN);
         setAuthError('Tu sesion expiro. Inicia sesion nuevamente.');
+        return;
       }
+      setSubjects(SUBJECTS);
     }
   };
 
