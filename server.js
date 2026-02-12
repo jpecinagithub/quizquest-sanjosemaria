@@ -111,16 +111,35 @@ const getDailyAttemptsForSubject = (userId, subjectId, callback) => {
     });
 };
 
-// Configuracion de la conexion a MySQL (Debes completar tus parametros en .env o aqui)
-const db = process.env.DB_URL
-  ? mysql.createConnection(process.env.DB_URL)
-  : mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '1234',
-      database: process.env.DB_NAME || 'quizquest_db',
-      port: Number(process.env.DB_PORT || 3306),
+// Configuracion de la conexion a MySQL.
+// Si existe DB_URL (Railway), se parsea y se permite sobreescribir la BD con DB_NAME.
+const createDbConnection = () => {
+    if (process.env.DB_URL) {
+        try {
+            const parsedUrl = new URL(process.env.DB_URL);
+            const dbNameFromUrl = parsedUrl.pathname.replace(/^\//, '');
+            return mysql.createConnection({
+                host: parsedUrl.hostname,
+                port: Number(parsedUrl.port || process.env.DB_PORT || 3306),
+                user: decodeURIComponent(parsedUrl.username),
+                password: decodeURIComponent(parsedUrl.password),
+                database: process.env.DB_NAME || dbNameFromUrl || 'quizquest_db',
+            });
+        } catch (error) {
+            console.error('DB_URL invalida, se intenta conexion por variables sueltas:', error.message);
+        }
+    }
+
+    return mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '1234',
+        database: process.env.DB_NAME || 'quizquest_db',
+        port: Number(process.env.DB_PORT || 3306),
     });
+};
+
+const db = createDbConnection();
 
 
 db.connect(err => {
