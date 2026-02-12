@@ -10,9 +10,10 @@ interface DashboardScreenProps {
   onOpenClassification: () => void;
   customSubjects?: Subject[];
   userData?: any;
+  notice?: string | null;
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, onOpenClassification, customSubjects, userData }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, onOpenClassification, customSubjects, userData, notice = null }) => {
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
@@ -63,6 +64,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
       </header>
 
       <main className="px-6 pt-6 pb-32">
+        {notice && (
+          <p className="mb-4 text-sm rounded-xl px-4 py-2 border text-amber-200 bg-amber-500/10 border-amber-500/30">
+            {notice}
+          </p>
+        )}
         <div className="mb-8">
           <div className="relative group">
             <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">search</span>

@@ -89,6 +89,13 @@ export const saveQuizResult = async (
   });
 };
 
+export const fetchQuizDailyStatus = async (
+  token: string,
+  subjectId: string
+): Promise<{ allowed: boolean; attemptsToday: number; dailyLimit: number; remaining: number }> => {
+  return apiFetch(`/quiz/can-start/${subjectId}`, { token });
+};
+
 export const fetchUserProfile = async (token: string, userId: number) => {
   return apiFetch(`/user/${userId}`, { token });
 };

@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
+  const [dashboardNotice, setDashboardNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated && currentScreen !== Screen.LOGIN) {
@@ -154,8 +155,17 @@ const App: React.FC = () => {
   };
 
   const handleStartQuiz = async (subject: Subject) => {
+    if (!user || !token) return;
+
+    setDashboardNotice(null);
     setIsQuizLoading(true);
     try {
+      const dailyStatus = await api.fetchQuizDailyStatus(token, subject.id);
+      if (!dailyStatus.allowed) {
+        setDashboardNotice('Has superado el numero de test diarios para esta asignatura.');
+        return;
+      }
+
       let questions = await generateQuizQuestions(subject.name, 5);
       
       if (!questions || questions.length === 0) {
@@ -173,7 +183,11 @@ const App: React.FC = () => {
       });
       setCurrentScreen(Screen.QUIZ);
     } catch (error) {
-      console.error("No se pudo iniciar el quiz", error);
+      if (error instanceof ApiError && error.status === 429) {
+        setDashboardNotice(error.message || 'Has superado el numero de test diarios para esta asignatura.');
+      } else {
+        console.error("No se pudo iniciar el quiz", error);
+      }
     } finally {
       setIsQuizLoading(false);
     }
@@ -187,6 +201,12 @@ const App: React.FC = () => {
         await api.saveQuizResult(token, user.id, quizState.subject.id, score, xpEarned);
         await loadInitialData();
       } catch (error) {
+        if (error instanceof ApiError && error.status === 429) {
+          setCurrentScreen(Screen.DASHBOARD);
+          setQuizState(null);
+          setDashboardNotice(error.message || 'Has superado el numero de test diarios para esta asignatura.');
+          return;
+        }
         if (error instanceof ApiError && error.status === 401) {
           await logout();
           setCurrentScreen(Screen.LOGIN);
@@ -312,6 +332,7 @@ const App: React.FC = () => {
             onOpenClassification={handleOpenClassification}
             customSubjects={subjects.length > 0 ? subjects : undefined}
             userData={userProfile || user}
+            notice={dashboardNotice}
           />
         )}
         {isAuthenticated && currentScreen === Screen.SETTINGS && (

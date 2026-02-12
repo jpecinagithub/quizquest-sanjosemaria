@@ -14,6 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
 const sessions = new Map();
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 8);
+const DAILY_QUIZ_LIMIT = 2;
 
 const sanitizeUser = (userRow) => ({
     id: userRow.id,
@@ -61,6 +62,21 @@ const authRequired = (req, res, next) => {
         userId: session.userId,
     };
     next();
+};
+
+const getDailyAttemptsForSubject = (userId, subjectId, callback) => {
+    const sql = `
+        SELECT COUNT(*) AS attemptsToday
+        FROM quiz_results
+        WHERE user_id = ?
+          AND subject_id = ?
+          AND DATE(completed_at) = CURDATE()
+    `;
+    db.query(sql, [userId, subjectId], (err, results) => {
+        if (err) return callback(err);
+        const attemptsToday = Number(results?.[0]?.attemptsToday || 0);
+        return callback(null, attemptsToday);
+    });
 };
 
 // Configuracion de la conexion a MySQL (Debes completar tus parametros en .env o aqui)
@@ -300,7 +316,26 @@ app.get('/api/subjects', authRequired, (req, res) => {
     });
 });
 
-// 9. Guardar resultado de un quiz
+// 9. Verificar si el usuario puede iniciar quiz hoy en una asignatura
+app.get('/api/quiz/can-start/:subjectId', authRequired, (req, res) => {
+    const subjectId = req.params.subjectId;
+    if (!subjectId) {
+        return res.status(400).json({ message: 'subjectId es requerido' });
+    }
+
+    getDailyAttemptsForSubject(req.auth.userId, subjectId, (err, attemptsToday) => {
+        if (err) return res.status(500).json(err);
+        const allowed = attemptsToday < DAILY_QUIZ_LIMIT;
+        return res.json({
+            allowed,
+            attemptsToday,
+            dailyLimit: DAILY_QUIZ_LIMIT,
+            remaining: Math.max(0, DAILY_QUIZ_LIMIT - attemptsToday),
+        });
+    });
+});
+
+// 10. Guardar resultado de un quiz
 app.post('/api/quiz/finish', authRequired, (req, res) => {
     const { userId, subjectId, score, xpEarned } = req.body;
     if (!userId || !subjectId || typeof score !== 'number' || typeof xpEarned !== 'number') {
@@ -310,15 +345,26 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
         return res.status(403).json({ message: 'No autorizado para guardar resultados de otro usuario' });
     }
 
-    const insertResult = 'INSERT INTO quiz_results (user_id, subject_id, score, xp_earned) VALUES (?, ?, ?, ?)';
-    db.query(insertResult, [userId, subjectId, score, xpEarned], (err) => {
-        if (err) return res.status(500).json(err);
+    getDailyAttemptsForSubject(userId, subjectId, (limitErr, attemptsToday) => {
+        if (limitErr) return res.status(500).json(limitErr);
+        if (attemptsToday >= DAILY_QUIZ_LIMIT) {
+            return res.status(429).json({
+                message: 'Has superado el numero de test diarios para esta asignatura.',
+                attemptsToday,
+                dailyLimit: DAILY_QUIZ_LIMIT,
+            });
+        }
 
-        // Actualizar XP total del usuario
-        const updateUserXp = 'UPDATE users SET total_xp = total_xp + ? WHERE id = ?';
-        db.query(updateUserXp, [xpEarned, userId], (err2) => {
-            if (err2) return res.status(500).json(err2);
-            res.json({ success: true, message: 'Resultado guardado y XP actualizado' });
+        const insertResult = 'INSERT INTO quiz_results (user_id, subject_id, score, xp_earned) VALUES (?, ?, ?, ?)';
+        db.query(insertResult, [userId, subjectId, score, xpEarned], (err) => {
+            if (err) return res.status(500).json(err);
+
+            // Actualizar XP total del usuario
+            const updateUserXp = 'UPDATE users SET total_xp = total_xp + ? WHERE id = ?';
+            db.query(updateUserXp, [xpEarned, userId], (err2) => {
+                if (err2) return res.status(500).json(err2);
+                res.json({ success: true, message: 'Resultado guardado y XP actualizado' });
+            });
         });
     });
 });
