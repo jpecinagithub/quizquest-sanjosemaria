@@ -101,29 +101,21 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ state, userRank = null, onD
         </div>
 
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Insignias obtenidas</h3>
-            <button className="text-primary text-sm font-semibold">Ver todas</button>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-            <div className="flex-shrink-0 w-24 flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-2 border-2 border-primary/20">
-                <span className="material-icons text-3xl text-primary">speed</span>
+          <h3 className="text-lg font-bold mb-4">Evaluacion del test</h3>
+          <div className="space-y-3">
+            {state.questions.map((question, index) => (
+              <div key={question.id || index} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                <p className="text-sm font-semibold mb-2">
+                  {index + 1}. {question.text}
+                </p>
+                <p className="text-xs text-emerald-300 mb-1">
+                  Respuesta correcta: {question.options[question.correctAnswerIndex]}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Explicacion: {question.explanation?.trim() || 'Sin explicacion disponible.'}
+                </p>
               </div>
-              <span className="text-xs font-bold">Rayo veloz</span>
-            </div>
-            <div className="flex-shrink-0 w-24 flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-2 border-2 border-primary/20">
-                <span className="material-icons text-3xl text-primary">psychology</span>
-              </div>
-              <span className="text-xs font-bold">Mente maestra</span>
-            </div>
-            <div className="flex-shrink-0 w-24 flex flex-col items-center text-center opacity-40">
-              <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-2 border-2 border-slate-700">
-                <span className="material-icons text-slate-500 text-3xl">lock</span>
-              </div>
-              <span className="text-xs font-bold text-slate-500">Puntuacion perfecta</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>

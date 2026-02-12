@@ -80,12 +80,18 @@ export const saveQuizResult = async (
   userId: number,
   subjectId: string,
   score: number,
-  xpEarned: number
+  xpEarned: number,
+  questions?: Array<{
+    text: string;
+    options: string[];
+    correctAnswerIndex: number;
+    explanation?: string;
+  }>
 ) => {
   return apiFetch('/quiz/finish', {
     method: 'POST',
     token,
-    body: { userId, subjectId, score, xpEarned },
+    body: { userId, subjectId, score, xpEarned, questions },
   });
 };
 

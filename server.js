@@ -337,12 +337,15 @@ app.get('/api/quiz/can-start/:subjectId', authRequired, (req, res) => {
 
 // 10. Guardar resultado de un quiz
 app.post('/api/quiz/finish', authRequired, (req, res) => {
-    const { userId, subjectId, score, xpEarned } = req.body;
+    const { userId, subjectId, score, xpEarned, questions } = req.body;
     if (!userId || !subjectId || typeof score !== 'number' || typeof xpEarned !== 'number') {
         return res.status(400).json({ message: 'Body invalido para guardar resultado' });
     }
     if (Number(userId) !== req.auth.userId) {
         return res.status(403).json({ message: 'No autorizado para guardar resultados de otro usuario' });
+    }
+    if (questions !== undefined && !Array.isArray(questions)) {
+        return res.status(400).json({ message: 'questions debe ser un array' });
     }
 
     getDailyAttemptsForSubject(userId, subjectId, (limitErr, attemptsToday) => {
@@ -355,15 +358,97 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
             });
         }
 
-        const insertResult = 'INSERT INTO quiz_results (user_id, subject_id, score, xp_earned) VALUES (?, ?, ?, ?)';
-        db.query(insertResult, [userId, subjectId, score, xpEarned], (err) => {
-            if (err) return res.status(500).json(err);
+        const sanitizedQuestions = (questions || []).map((question) => ({
+            text: typeof question?.text === 'string' ? question.text.trim() : '',
+            options: Array.isArray(question?.options) ? question.options.slice(0, 4).map((option) => String(option ?? '')) : [],
+            correctAnswerIndex: Number(question?.correctAnswerIndex),
+            explanation: typeof question?.explanation === 'string' ? question.explanation : null,
+        }));
 
-            // Actualizar XP total del usuario
-            const updateUserXp = 'UPDATE users SET total_xp = total_xp + ? WHERE id = ?';
-            db.query(updateUserXp, [xpEarned, userId], (err2) => {
-                if (err2) return res.status(500).json(err2);
-                res.json({ success: true, message: 'Resultado guardado y XP actualizado' });
+        const hasInvalidQuestion = sanitizedQuestions.some((question) => (
+            !question.text ||
+            question.options.length !== 4 ||
+            question.options.some((option) => option.trim().length === 0) ||
+            !Number.isInteger(question.correctAnswerIndex) ||
+            question.correctAnswerIndex < 0 ||
+            question.correctAnswerIndex > 3
+        ));
+
+        if (hasInvalidQuestion) {
+            return res.status(400).json({ message: 'Formato de questions invalido. Cada pregunta debe tener texto, 4 opciones y correctAnswerIndex entre 0 y 3.' });
+        }
+
+        db.beginTransaction((txErr) => {
+            if (txErr) return res.status(500).json(txErr);
+
+            let settled = false;
+            const rollbackWith = (errorPayload) => {
+                if (settled) return;
+                settled = true;
+                db.rollback(() => res.status(500).json(errorPayload));
+            };
+
+            const insertResult = 'INSERT INTO quiz_results (user_id, subject_id, score, xp_earned) VALUES (?, ?, ?, ?)';
+            db.query(insertResult, [userId, subjectId, score, xpEarned], (insertErr) => {
+                if (insertErr) return rollbackWith(insertErr);
+
+                const updateUserXp = 'UPDATE users SET total_xp = total_xp + ? WHERE id = ?';
+                db.query(updateUserXp, [xpEarned, userId], (updateErr) => {
+                    if (updateErr) return rollbackWith(updateErr);
+
+                    if (!sanitizedQuestions.length) {
+                        return db.commit((commitErr) => {
+                            if (commitErr) return rollbackWith(commitErr);
+                            if (settled) return;
+                            settled = true;
+                            return res.json({ success: true, message: 'Resultado guardado y XP actualizado' });
+                        });
+                    }
+
+                    const insertQuestionSql = `
+                        INSERT INTO questions (
+                            subject_id,
+                            question_text,
+                            option_a,
+                            option_b,
+                            option_c,
+                            option_d,
+                            correct_option_index,
+                            explanation
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    `;
+
+                    let pending = sanitizedQuestions.length;
+                    for (const question of sanitizedQuestions) {
+                        const params = [
+                            subjectId,
+                            question.text,
+                            question.options[0],
+                            question.options[1],
+                            question.options[2],
+                            question.options[3],
+                            question.correctAnswerIndex,
+                            question.explanation,
+                        ];
+
+                        db.query(insertQuestionSql, params, (questionErr) => {
+                            if (questionErr) return rollbackWith(questionErr);
+
+                            pending -= 1;
+                            if (pending === 0) {
+                                db.commit((commitErr) => {
+                                    if (commitErr) return rollbackWith(commitErr);
+                                    if (settled) return;
+                                    settled = true;
+                                    return res.json({
+                                        success: true,
+                                        message: 'Resultado guardado, XP actualizado y preguntas registradas',
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
             });
         });
     });

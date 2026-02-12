@@ -224,7 +224,19 @@ const App: React.FC = () => {
       setLastResultRank(computedRank > 0 ? computedRank : null);
       
       try {
-        await api.saveQuizResult(token, user.id, quizState.subject.id, score, xpEarned);
+        await api.saveQuizResult(
+          token,
+          user.id,
+          quizState.subject.id,
+          score,
+          xpEarned,
+          quizState.questions.map((question) => ({
+            text: question.text,
+            options: question.options,
+            correctAnswerIndex: question.correctAnswerIndex,
+            explanation: question.explanation,
+          }))
+        );
         await loadInitialData();
       } catch (error) {
         if (error instanceof ApiError && error.status === 429) {
