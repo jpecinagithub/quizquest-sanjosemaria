@@ -8,7 +8,7 @@ import ClassificationScreen from './components/ClassificationScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 import { generateQuizQuestions } from './services/geminiService';
-import { MOCK_QUESTIONS, SUBJECTS } from './constants';
+import { MOCK_CLASSIFICATION_BASE, MOCK_QUESTIONS, SUBJECTS } from './constants';
 import * as api from './services/api';
 import { useAuth } from './context/AuthContext';
 import { AuthApiError, forgotPasswordRequest } from './services/authApi';
@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
   const [dashboardNotice, setDashboardNotice] = useState<string | null>(null);
+  const [lastResultRank, setLastResultRank] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated && currentScreen !== Screen.LOGIN) {
@@ -195,7 +196,32 @@ const App: React.FC = () => {
 
   const handleFinishQuiz = async (score: number, answers: number[]) => {
     if (quizState && user && token) {
-      const xpEarned = Math.round(score * 4.5);
+      const xpEarned = answers.reduce((total, answerIndex, questionIndex) => {
+        if (answerIndex === -1) return total;
+        const isCorrect = answerIndex === quizState.questions[questionIndex].correctAnswerIndex;
+        return total + (isCorrect ? 20 : -5);
+      }, 0);
+      const projectedTotalXp = Number(userProfile?.total_xp ?? user.total_xp ?? 0) + xpEarned;
+
+      const rankingRows = [...MOCK_CLASSIFICATION_BASE];
+      const existingIndex = rankingRows.findIndex(
+        (row) => row.name.toLowerCase() === user.name.toLowerCase()
+      );
+      if (existingIndex >= 0) {
+        rankingRows[existingIndex] = {
+          ...rankingRows[existingIndex],
+          xp: projectedTotalXp,
+        };
+      } else {
+        rankingRows.push({
+          name: user.name,
+          xp: projectedTotalXp,
+          profile_pic: user.profile_pic || `https://picsum.photos/seed/${encodeURIComponent(user.name)}/96`,
+        });
+      }
+      rankingRows.sort((a, b) => b.xp - a.xp);
+      const computedRank = rankingRows.findIndex((row) => row.name.toLowerCase() === user.name.toLowerCase()) + 1;
+      setLastResultRank(computedRank > 0 ? computedRank : null);
       
       try {
         await api.saveQuizResult(token, user.id, quizState.subject.id, score, xpEarned);
@@ -359,6 +385,7 @@ const App: React.FC = () => {
         {isAuthenticated && currentScreen === Screen.RESULTS && quizState && (
           <ResultScreen 
             state={quizState} 
+            userRank={lastResultRank}
             onDashboard={handleBackToDashboard} 
           />
         )}

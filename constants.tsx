@@ -41,6 +41,19 @@ export const SUBJECTS: Subject[] = [
   },
 ];
 
+export const MOCK_CLASSIFICATION_BASE: Array<{ name: string; xp: number; profile_pic: string }> = [
+  { name: 'Maria', xp: 4820, profile_pic: 'https://picsum.photos/seed/maria/96' },
+  { name: 'Carlos', xp: 4510, profile_pic: 'https://picsum.photos/seed/carlos/96' },
+  { name: 'Lucia', xp: 4300, profile_pic: 'https://picsum.photos/seed/lucia/96' },
+  { name: 'Andres', xp: 4110, profile_pic: 'https://picsum.photos/seed/andres/96' },
+  { name: 'Elena', xp: 3980, profile_pic: 'https://picsum.photos/seed/elena/96' },
+  { name: 'Pablo', xp: 3720, profile_pic: 'https://picsum.photos/seed/pablo/96' },
+  { name: 'Sofia', xp: 3590, profile_pic: 'https://picsum.photos/seed/sofia/96' },
+  { name: 'Miguel', xp: 3400, profile_pic: 'https://picsum.photos/seed/miguel/96' },
+  { name: 'Laura', xp: 3260, profile_pic: 'https://picsum.photos/seed/laura/96' },
+  { name: 'Hugo', xp: 3120, profile_pic: 'https://picsum.photos/seed/hugo/96' },
+];
+
 export const MOCK_QUESTIONS: Record<string, any[]> = {
   josemaria_1902_1915: [
     {

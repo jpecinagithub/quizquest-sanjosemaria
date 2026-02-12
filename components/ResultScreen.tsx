@@ -4,14 +4,18 @@ import { QuizState } from '../types';
 
 interface ResultScreenProps {
   state: QuizState;
+  userRank?: number | null;
   onDashboard: () => void;
 }
 
-const ResultScreen: React.FC<ResultScreenProps> = ({ state, onDashboard }) => {
+const ResultScreen: React.FC<ResultScreenProps> = ({ state, userRank = null, onDashboard }) => {
   const correctCount = state.answers.reduce((acc, ans, idx) => {
     return acc + (ans === state.questions[idx].correctAnswerIndex ? 1 : 0);
   }, 0);
-  const incorrectCount = state.questions.length - correctCount;
+  const incorrectCount = state.answers.reduce((acc, ans, idx) => {
+    if (ans === -1) return acc;
+    return acc + (ans === state.questions[idx].correctAnswerIndex ? 0 : 1);
+  }, 0);
   
   const timeTaken = state.endTime ? Math.floor((state.endTime - state.startTime) / 1000) : 0;
   const minutes = Math.floor(timeTaken / 60);
@@ -86,18 +90,13 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ state, onDashboard }) => {
           <div className="h-8 w-px bg-slate-800"></div>
           <div className="flex flex-col items-center">
             <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Ranking</span>
-            <div className="flex items-center gap-1.5">
-              <span className="material-icons text-[18px] text-yellow-500">military_tech</span>
-              <span className="font-semibold">#{Math.floor(Math.random() * 100) + 1}</span>
-            </div>
+            <span className="font-semibold">{userRank ? `#${userRank}` : '-'}</span>
           </div>
           <div className="h-8 w-px bg-slate-800"></div>
           <div className="flex flex-col items-center">
-            <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">XP ganada</span>
-            <div className="flex items-center gap-1.5">
-              <span className="material-icons text-[18px] text-blue-400">bolt</span>
-              <span className="font-semibold">+{Math.round(state.score * 4.5)}</span>
-            </div>
+            <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Puntuacion</span>
+            <span className="text-[10px] text-slate-400">Puntuacion del ultimo test</span>
+            <span className="font-semibold">{state.score}</span>
           </div>
         </div>
 

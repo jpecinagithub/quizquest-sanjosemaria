@@ -1,30 +1,18 @@
 import React from 'react';
 import { AuthUser } from '../types';
+import { MOCK_CLASSIFICATION_BASE } from '../constants';
 
 interface ClassificationScreenProps {
   onBack: () => void;
   userData?: AuthUser | null;
 }
 
-const MOCK_TOP_USERS: Array<{ name: string; xp: number; profile_pic: string }> = [
-  { name: 'Maria', xp: 4820, profile_pic: 'https://picsum.photos/seed/maria/96' },
-  { name: 'Carlos', xp: 4510, profile_pic: 'https://picsum.photos/seed/carlos/96' },
-  { name: 'Lucia', xp: 4300, profile_pic: 'https://picsum.photos/seed/lucia/96' },
-  { name: 'Andres', xp: 4110, profile_pic: 'https://picsum.photos/seed/andres/96' },
-  { name: 'Elena', xp: 3980, profile_pic: 'https://picsum.photos/seed/elena/96' },
-  { name: 'Pablo', xp: 3720, profile_pic: 'https://picsum.photos/seed/pablo/96' },
-  { name: 'Sofia', xp: 3590, profile_pic: 'https://picsum.photos/seed/sofia/96' },
-  { name: 'Miguel', xp: 3400, profile_pic: 'https://picsum.photos/seed/miguel/96' },
-  { name: 'Laura', xp: 3260, profile_pic: 'https://picsum.photos/seed/laura/96' },
-  { name: 'Hugo', xp: 3120, profile_pic: 'https://picsum.photos/seed/hugo/96' },
-];
-
 const ClassificationScreen: React.FC<ClassificationScreenProps> = ({ onBack, userData }) => {
   const currentUserName = userData?.name?.trim();
   const currentUserXp = Number(userData?.total_xp || 0);
 
   const ranking = React.useMemo(() => {
-    const rows = [...MOCK_TOP_USERS];
+    const rows = [...MOCK_CLASSIFICATION_BASE];
     if (currentUserName) {
       const exists = rows.some((row) => row.name.toLowerCase() === currentUserName.toLowerCase());
       if (!exists) {
