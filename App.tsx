@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { AuthUser, QuizState, Screen, Subject } from './types';
 import LoginScreen from './components/LoginScreen';
 import DashboardScreen from './components/DashboardScreen';
+import SettingsScreen from './components/SettingsScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 import { generateQuizQuestions } from './services/geminiService';
@@ -208,6 +209,21 @@ const App: React.FC = () => {
     setCurrentScreen(Screen.DASHBOARD);
   };
 
+  const handleOpenSettings = () => {
+    setCurrentScreen(Screen.SETTINGS);
+  };
+
+  const handleBackFromSettings = () => {
+    setCurrentScreen(Screen.DASHBOARD);
+  };
+
+  const handleSaveSettingsLocal = (profilePic: string | null) => {
+    setUserProfile((prev) => ({
+      ...(prev || user || ({} as AuthUser)),
+      profile_pic: profilePic,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-background-dark text-slate-100 flex flex-col max-w-[430px] mx-auto relative overflow-hidden shadow-2xl">
       <div className="fixed inset-0 z-0 bg-grid opacity-30 pointer-events-none"></div>
@@ -239,8 +255,16 @@ const App: React.FC = () => {
           <DashboardScreen 
             onStartQuiz={handleStartQuiz} 
             onLogout={() => { void handleLogout(); }}
+            onOpenSettings={handleOpenSettings}
             customSubjects={subjects.length > 0 ? subjects : undefined}
             userData={userProfile || user}
+          />
+        )}
+        {isAuthenticated && currentScreen === Screen.SETTINGS && (
+          <SettingsScreen
+            userData={userProfile || user}
+            onBack={handleBackFromSettings}
+            onSaveLocal={handleSaveSettingsLocal}
           />
         )}
         {isAuthenticated && currentScreen === Screen.QUIZ && quizState && (

@@ -2,6 +2,7 @@
 export enum Screen {
   LOGIN = 'LOGIN',
   DASHBOARD = 'DASHBOARD',
+  SETTINGS = 'SETTINGS',
   QUIZ = 'QUIZ',
   RESULTS = 'RESULTS'
 }

@@ -6,11 +6,12 @@ import { SUBJECTS } from '../constants';
 interface DashboardScreenProps {
   onStartQuiz: (subject: Subject) => void;
   onLogout: () => void;
+  onOpenSettings: () => void;
   customSubjects?: Subject[];
   userData?: any;
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, customSubjects, userData }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout, onOpenSettings, customSubjects, userData }) => {
   const displaySubjects = customSubjects || SUBJECTS;
   const displayXp = userData?.total_xp || "1,250";
   const displayName = userData?.name || "Alex";
@@ -32,8 +33,14 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
               <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-background-dark"></div>
             </div>
             <div>
-              <h1 className="text-sm text-slate-500 font-medium">Hola, {displayName}!</h1>
-              <p className="text-lg font-bold leading-none">¿Listo para subir de nivel?</p>
+              <h1 className="text-lg text-slate-100 font-bold">{displayName}</h1>
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="text-xs text-primary font-semibold hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
+              >
+                Settings
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -124,7 +131,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
             <span className="material-icons-outlined">notifications</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Alertas</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-primary">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-primary"
+          >
             <span className="material-icons-outlined">settings</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Ajustes</span>
           </button>
