@@ -105,15 +105,34 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ state, userRank = null, onD
           <div className="space-y-3">
             {state.questions.map((question, index) => (
               <div key={question.id || index} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                <p className="text-sm font-semibold mb-2">
-                  {index + 1}. {question.text}
-                </p>
-                <p className="text-xs text-emerald-300 mb-1">
-                  Respuesta correcta: {question.options[question.correctAnswerIndex]}
-                </p>
-                <p className="text-xs text-slate-400">
-                  Explicacion: {question.explanation?.trim() || 'Sin explicacion disponible.'}
-                </p>
+                {(() => {
+                  const selectedAnswerIndex = state.answers[index];
+                  const isIncorrect =
+                    selectedAnswerIndex !== -1 && selectedAnswerIndex !== question.correctAnswerIndex;
+                  const selectedAnswerText =
+                    selectedAnswerIndex >= 0 && selectedAnswerIndex < question.options.length
+                      ? question.options[selectedAnswerIndex]
+                      : 'Sin respuesta';
+
+                  return (
+                    <>
+                      <p className="text-sm font-semibold mb-2">
+                        {index + 1}. {question.text}
+                      </p>
+                      {isIncorrect && (
+                        <p className="text-xs text-red-400 mb-1">
+                          Respuesta incorrecta: {selectedAnswerText}
+                        </p>
+                      )}
+                      <p className="text-xs text-emerald-300 mb-1">
+                        Respuesta correcta: {question.options[question.correctAnswerIndex]}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Explicacion: {question.explanation?.trim() || 'Sin explicacion disponible.'}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>
