@@ -23,16 +23,19 @@ const ADMIN_USER_RULE = {
     name: 'Jon',
 };
 
+const gmailUser = (process.env.GMAIL_USER || '').trim();
+const gmailAppPassword = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+
 const mailTransport = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: gmailUser,
+        pass: gmailAppPassword,
     },
 });
 
 const sendPasswordResetEmail = async (email, token) => {
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    if (!gmailUser || !gmailAppPassword) {
         throw new Error('Credenciales de Gmail no configuradas');
     }
 
@@ -40,7 +43,7 @@ const sendPasswordResetEmail = async (email, token) => {
         ? `Abre ${appBaseUrl} y usa el codigo en la pantalla de recuperacion.`
         : 'Abre la app y usa este codigo en la pantalla de recuperacion.';
     const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: gmailUser,
         to: email,
         subject: 'QuizQuest - Recuperacion de contrasena',
         text: `Hemos recibido una solicitud para restablecer tu contrasena.\n\nCodigo de recuperacion: ${token}\n\nEste codigo caduca en ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutos.\n${resetHint}\n\nSi no solicitaste este cambio, ignora este mensaje.`,
@@ -348,6 +351,7 @@ app.post('/api/auth/forgot-password', (req, res) => {
                 await sendPasswordResetEmail(email, token);
                 return res.json(genericResponse);
             } catch (mailErr) {
+                console.error('Error enviando correo de recuperacion:', mailErr);
                 return res.status(500).json({ message: 'No se pudo enviar el correo de recuperacion.' });
             }
         });
