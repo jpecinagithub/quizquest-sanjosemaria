@@ -48,10 +48,10 @@ Base URL del backend: `http://localhost:3001/api`
   - `400`: body invalido.
   - `409`: email ya registrado.
 
-## 3. Forgot Password (simulado)
+## 3. Forgot Password
 - Metodo: `POST`
 - Ruta: `/auth/forgot-password`
-- Descripcion: Simula el envio de instrucciones de recuperacion.
+- Descripcion: Genera un codigo temporal y lo envia por email usando Resend.
 - Headers requeridos:
   - `Content-Type: application/json`
 - Body (JSON):
@@ -64,11 +64,33 @@ Base URL del backend: `http://localhost:3001/api`
 ```json
 {
   "success": true,
-  "message": "Si el correo existe, recibiras instrucciones para recuperar tu cuenta."
+  "message": "Si el correo existe, recibiras un codigo de recuperacion."
 }
 ```
 
-## 4. Usuario autenticado actual
+## 4. Reset Password
+- Metodo: `POST`
+- Ruta: `/auth/reset-password`
+- Descripcion: Cambia la contraseña usando el codigo recibido por email.
+- Headers requeridos:
+  - `Content-Type: application/json`
+- Body (JSON):
+```json
+{
+  "email": "alex@quizquest.com",
+  "token": "ABC123DEF456",
+  "newPassword": "nueva123"
+}
+```
+- Respuesta exitosa (200):
+```json
+{
+  "success": true,
+  "message": "Contrasena restablecida correctamente."
+}
+```
+
+## 5. Usuario autenticado actual
 - Metodo: `GET`
 - Ruta: `/auth/me`
 - Headers requeridos:
@@ -86,7 +108,7 @@ Base URL del backend: `http://localhost:3001/api`
 }
 ```
 
-## 5. Logout
+## 6. Logout
 - Metodo: `POST`
 - Ruta: `/auth/logout`
 - Headers requeridos:
@@ -96,7 +118,7 @@ Base URL del backend: `http://localhost:3001/api`
 { "success": true }
 ```
 
-## 6. Obtener perfil de usuario (protegido)
+## 7. Obtener perfil de usuario (protegido)
 - Metodo: `GET`
 - Ruta: `/user/:id`
 - Headers requeridos:
@@ -104,7 +126,7 @@ Base URL del backend: `http://localhost:3001/api`
 - Reglas:
   - Solo permite consultar tu propio `id`.
 
-## 7. Obtener asignaturas y progreso (protegido)
+## 8. Obtener asignaturas y progreso (protegido)
 - Metodo: `GET`
 - Ruta: `/subjects`
 - Headers requeridos:
@@ -112,7 +134,7 @@ Base URL del backend: `http://localhost:3001/api`
 - Nota:
   - `best_score` y `attempts` se calculan por usuario autenticado.
 
-## 8. Guardar resultado de quiz (protegido)
+## 9. Guardar resultado de quiz (protegido)
 - Metodo: `POST`
 - Ruta: `/quiz/finish`
 - Headers requeridos:
@@ -122,7 +144,7 @@ Base URL del backend: `http://localhost:3001/api`
 ```json
 {
   "userId": 1,
-  "subjectId": "josemaria_zaragoza_1920_1927",
+  "subjectId": 3,
   "score": 90,
   "xpEarned": 45
 }

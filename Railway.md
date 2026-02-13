@@ -32,10 +32,16 @@ Variables opcionales en `api`:
   - Default: `28800000` (8h)
 - `PASSWORD_RESET_TOKEN_TTL_MINUTES`
   - Default: `30`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+  - Default: `900000` (15 minutos)
+- `AUTH_RATE_LIMIT_MAX_REQUESTS`
+  - Default: `10`
+- `CORS_ORIGIN`
+  - Recomendado en producción.
+  - Un origen o varios separados por coma.
+  - Ejemplo: `https://front-production-f2cc.up.railway.app`
 - `PORT`
   - Railway la inyecta automáticamente; no suele hacer falta definirla manualmente.
-
-No necesitas `GMAIL_USER` ni `GMAIL_APP_PASSWORD` si ya usas Resend.
 
 ## 3) Servicio `mysql`
 En el servicio MySQL normalmente no tienes que crear variables manualmente.

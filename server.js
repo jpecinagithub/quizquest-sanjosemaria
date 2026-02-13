@@ -8,14 +8,35 @@ import path from 'path';
 
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedCorsOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow non-browser clients (curl/postman/server-to-server).
+        if (!origin) return callback(null, true);
+        // In local/dev, allow all if CORS_ORIGIN is not configured.
+        if (!isProduction && allowedCorsOrigins.length === 0) return callback(null, true);
+        if (allowedCorsOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error('CORS_ORIGIN_DENIED'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
 const sessions = new Map();
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 8);
 const DAILY_QUIZ_LIMIT = 2;
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30);
+const AUTH_RATE_LIMIT_WINDOW_MS = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 1000 * 60 * 15);
+const AUTH_RATE_LIMIT_MAX_REQUESTS = Number(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || 10);
 const appBaseUrl = process.env.APP_BASE_URL || '';
 const ADMIN_USER_RULE = {
     id: 1,
@@ -77,6 +98,48 @@ const extractBearerToken = (authorizationHeader = '') => {
 };
 
 const isPasswordMatch = (storedPassword, rawPassword) => storedPassword === rawPassword;
+const authRateBuckets = new Map();
+
+const getRequestIp = (req) => {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+        return forwardedFor.split(',')[0].trim();
+    }
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+};
+
+const authRateLimit = (req, res, next) => {
+    const ip = getRequestIp(req);
+    const routeKey = `${req.method}:${req.path}`;
+    const bucketKey = `${ip}:${routeKey}`;
+    const now = Date.now();
+
+    const bucket = authRateBuckets.get(bucketKey);
+    if (!bucket || now > bucket.resetAt) {
+        authRateBuckets.set(bucketKey, { count: 1, resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS });
+        return next();
+    }
+
+    bucket.count += 1;
+    if (bucket.count > AUTH_RATE_LIMIT_MAX_REQUESTS) {
+        const retryAfterSeconds = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+        res.set('Retry-After', String(retryAfterSeconds));
+        return res.status(429).json({
+            message: 'Demasiadas solicitudes de autenticacion. Intenta de nuevo en unos minutos.',
+        });
+    }
+
+    return next();
+};
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of authRateBuckets.entries()) {
+        if (now > bucket.resetAt) {
+            authRateBuckets.delete(key);
+        }
+    }
+}, Math.max(30000, AUTH_RATE_LIMIT_WINDOW_MS)).unref();
 
 const createSession = (userId) => {
     const token = randomUUID();
@@ -273,7 +336,7 @@ ensurePasswordResetsTable();
 // --- ENDPOINTS ---
 
 // 1. Login basico
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', authRateLimit, (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password) {
         return res.status(400).json({ message: 'Email y password son requeridos' });
@@ -294,7 +357,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // 2. Registro
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', authRateLimit, (req, res) => {
     const { name, email, password } = req.body || {};
     if (!name || !email || !password) {
         return res.status(400).json({ message: 'Nombre, email y password son requeridos' });
@@ -325,8 +388,8 @@ app.post('/api/auth/register', (req, res) => {
     });
 });
 
-// 3. Recuperar password (simulado)
-app.post('/api/auth/forgot-password', (req, res) => {
+// 3. Recuperar password (codigo por email con Resend)
+app.post('/api/auth/forgot-password', authRateLimit, (req, res) => {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ message: 'Email requerido' });
 
@@ -357,7 +420,7 @@ app.post('/api/auth/forgot-password', (req, res) => {
     });
 });
 
-app.post('/api/auth/reset-password', (req, res) => {
+app.post('/api/auth/reset-password', authRateLimit, (req, res) => {
     const { email, token, newPassword } = req.body || {};
     if (!email || !token || !newPassword) {
         return res.status(400).json({ message: 'email, token y newPassword son requeridos' });
@@ -863,6 +926,13 @@ app.post('/api/quiz/finish', authRequired, (req, res) => {
             });
         });
     });
+});
+
+app.use((error, req, res, next) => {
+    if (error?.message === 'CORS_ORIGIN_DENIED') {
+        return res.status(403).json({ message: 'Origen no permitido por CORS' });
+    }
+    return next(error);
 });
 
 const PORT = process.env.PORT || 3001;

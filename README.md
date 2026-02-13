@@ -8,9 +8,10 @@ QuizQuest es una aplicación de trivias gamificada que utiliza Inteligencia Arti
 ## 🚀 Requisitos Previos
 
 Antes de comenzar, asegúrate de tener instalado:
-- [Node.js](https://nodejs.org/) (v16 o superior)
+- [Node.js](https://nodejs.org/) (v18 o superior recomendado)
 - [MySQL Server](https://www.mysql.com/)
-- Una API Key de [Google AI Studio](https://aistudio.google.com/) (para la generación de preguntas con IA)
+- Una API Key de [Google AI Studio](https://aistudio.google.com/) (si usarás generación de preguntas con IA)
+- Una API Key de [Resend](https://resend.com/) (para recuperación de contraseña por email)
 
 ---
 
@@ -19,7 +20,7 @@ Antes de comenzar, asegúrate de tener instalado:
 ### 1. Base de Datos (MySQL)
 
 1. Abre tu cliente de MySQL (Workbench, phpMyAdmin o terminal).
-2. Ejecuta el contenido del archivo `database.sql` incluido en la raíz del proyecto.
+2. Ejecuta el contenido del archivo `bbdd/database.sql`.
    - Esto creará la base de datos `quizquest_db` y las tablas `users`, `subjects`, `questions` y `quiz_results`.
    - También insertará los temas iniciales y un usuario de prueba ("Alex").
 
@@ -28,17 +29,23 @@ Antes de comenzar, asegúrate de tener instalado:
 El backend está construido con Node.js y Express.
 
 1. Abre una terminal en la carpeta raíz (o donde ubiques `server.js`).
-2. Instala las dependencias necesarias:
+2. Instala las dependencias:
    ```bash
-   npm install express mysql2 cors dotenv
+   npm install
    ```
-3. Crea un archivo `.env` en la raíz del backend con tus credenciales:
+3. Crea un archivo `.env` en la raíz usando `.env.example` como base:
    ```env
    DB_HOST=localhost
-   DB_USER=tu_usuario_mysql
-   DB_PASSWORD=tu_password_mysql
+   DB_USER=root
+   DB_PASSWORD=1234
    DB_NAME=quizquest_db
+   DB_PORT=3306
    PORT=3001
+   RESEND_API_KEY=re_xxx
+   MAIL_FROM=onboarding@resend.dev
+   APP_BASE_URL=http://localhost:3000
+   PASSWORD_RESET_TOKEN_TTL_MINUTES=30
+   SESSION_TTL_MS=28800000
    ```
 4. Inicia el servidor:
    ```bash
@@ -50,8 +57,11 @@ El backend está construido con Node.js y Express.
 
 La aplicación utiliza React y Tailwind CSS.
 
-1. Asegúrate de que el frontend apunte a la URL correcta del backend en `services/api.ts` (por defecto `http://localhost:3001/api`).
-2. **Configuración de IA**: La aplicación requiere la clave `process.env.API_KEY` para funcionar. Si estás usando un entorno de desarrollo local (como Vite o Webpack), asegúrate de definirla en tu entorno.
+1. Asegúrate de que el frontend apunte a la URL correcta del backend con:
+   ```env
+   VITE_API_BASE_URL=http://localhost:3001/api
+   ```
+2. **Configuración de IA** (opcional): define `GEMINI_API_KEY` en tu `.env` para generación de preguntas.
 3. Instala las dependencias del frontend:
    ```bash
    npm install
@@ -87,3 +97,4 @@ La aplicación utiliza React y Tailwind CSS.
 - **Error de CORS**: El servidor tiene habilitado `cors()`, pero asegúrate de que el puerto del frontend coincida con los permisos.
 - **Gemini API Error**: Verifica que tu API Key sea válida y que tengas cuota disponible en Google AI Studio.
 - **Conexión MySQL**: Si usas XAMPP, el usuario suele ser `root` y el password vacío.
+- **No llega email de recuperación**: revisa `RESEND_API_KEY`, `MAIL_FROM` y los logs del backend.

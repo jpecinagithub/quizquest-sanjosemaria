@@ -21,7 +21,7 @@ Accept: application/json
   "password": "123456"
 }
 
-### 3) Forgot Password (simulado)
+### 3) Forgot Password
 POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 Accept: application/json
@@ -30,25 +30,36 @@ Accept: application/json
   "email": "alex@quizquest.com"
 }
 
+### 4) Reset Password (usa el codigo recibido por email)
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "alex@quizquest.com",
+  "token": "ABC123DEF456",
+  "newPassword": "123456"
+}
+
 ### Copia el token de login/register y pegalo aqui:
 @authToken = REEMPLAZAR_TOKEN
 
-### 4) Obtener usuario autenticado actual
+### 5) Obtener usuario autenticado actual
 GET {{baseUrl}}/auth/me
 Authorization: Bearer {{authToken}}
 Accept: application/json
 
-### 5) Obtener perfil de usuario por ID (mismo usuario del token)
+### 6) Obtener perfil de usuario por ID (mismo usuario del token)
 GET {{baseUrl}}/user/1
 Authorization: Bearer {{authToken}}
 Accept: application/json
 
-### 6) Obtener todas las asignaturas con progreso del usuario autenticado
+### 7) Obtener todas las asignaturas con progreso del usuario autenticado
 GET {{baseUrl}}/subjects
 Authorization: Bearer {{authToken}}
 Accept: application/json
 
-### 7) Guardar resultado de quiz (actualiza XP)
+### 8) Guardar resultado de quiz (actualiza XP)
 POST {{baseUrl}}/quiz/finish
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -56,12 +67,12 @@ Accept: application/json
 
 {
   "userId": 1,
-  "subjectId": "josemaria_zaragoza_1920_1927",
+  "subjectId": 3,
   "score": 90,
   "xpEarned": 45
 }
 
-### 8) Logout
+### 9) Logout
 POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{authToken}}
 Accept: application/json
