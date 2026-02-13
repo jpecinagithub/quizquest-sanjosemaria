@@ -12,7 +12,7 @@ interface RegisterPayload {
   password: string;
 }
 
-const AUTH_REQUEST_TIMEOUT_MS = 7000;
+const AUTH_REQUEST_TIMEOUT_MS = 15000;
 
 type AuthApiErrorType = 'http' | 'network' | 'unknown';
 
@@ -32,6 +32,10 @@ export class AuthApiError extends Error {
     this.type = params.type;
   }
 }
+
+const isAbortError = (error: unknown): boolean => {
+  return error instanceof DOMException && error.name === 'AbortError';
+};
 
 const parseApiError = async (response: Response): Promise<{ message: string; status: number }> => {
   try {
@@ -78,6 +82,9 @@ export const loginRequest = async (email: string, password: string): Promise<Log
     return response.json();
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
@@ -102,6 +109,9 @@ export const fetchCurrentUser = async (token: string): Promise<AuthUser> => {
     return data.user;
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
@@ -125,6 +135,9 @@ export const registerRequest = async (payload: RegisterPayload): Promise<LoginRe
     return response.json();
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
@@ -148,6 +161,9 @@ export const forgotPasswordRequest = async (email: string): Promise<{ success: b
     return response.json();
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
@@ -175,6 +191,9 @@ export const resetPasswordRequest = async (
     return response.json();
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
@@ -197,6 +216,9 @@ export const logoutRequest = async (token: string): Promise<void> => {
     }
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
+    if (isAbortError(error)) {
+      throw new AuthApiError('El servidor tardó demasiado en responder', { type: 'network' });
+    }
     if (error instanceof TypeError) {
       throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
     }
