@@ -1,24 +1,29 @@
-# Migraciones SQL
+# Migraciones SQL (Baseline P1)
 
-Este proyecto todavia no usa un motor de migraciones automatizado.
-Por ahora, las migraciones se gestionan con SQL versionado en esta carpeta.
+Este proyecto usa migraciones SQL manuales versionadas en esta carpeta.
 
-## Convencion de nombres
+## Orden de ejecucion
 
-- `NNN_descripcion.sql`
-- Ejemplo: `001_baseline_schema.sql`
+1. `000_schema_migrations.sql`
+2. `001_core_schema.sql`
+3. `002_reference_data.sql`
+4. `003_seed_questions.sql` (opcional, solo si quieres preguntas demo)
 
-## Flujo recomendado
+## Entornos
 
-1. Crear nueva migracion SQL en esta carpeta.
-2. Probar en entorno local.
-3. Ejecutar en staging/produccion (Railway) en orden numerico.
-4. Registrar en PR el resultado de ejecucion.
+- Produccion: ejecutar `000` + `001` + `002`. `003` solo si se desea contenido demo.
+- Local nuevo: ejecutar `000` + `001` + `002` + `003`.
 
-## Baseline actual
+## Verificacion
 
-- Esquema base: `bbdd/database.sql`
-- Datos de ejemplo: `bbdd/seed.sql`
+```sql
+USE quizquest_db;
+SELECT version, description, applied_at
+FROM schema_migrations
+ORDER BY version;
+```
 
-Como siguiente paso de P1, se recomienda introducir una tabla `schema_migrations`
-para llevar trazabilidad de versiones aplicadas.
+## Notas
+
+- Las migraciones son idempotentes (`IF NOT EXISTS`, `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`).
+- Para cambios futuros: crear un nuevo archivo `NNN_descripcion.sql` y nunca editar una migracion ya aplicada en produccion.

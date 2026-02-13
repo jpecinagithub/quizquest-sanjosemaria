@@ -215,7 +215,7 @@ Estado: parcial completado con validadores propios para autenticación (`src/aut
 3. Añadir tests de API críticos (auth, forgot/reset, quiz finish).
 Estado: parcial completado con smoke test de autenticación `tests/auth.smoke.mjs`.
 4. Añadir migrations versionadas para MySQL.
-Estado: base creada en `bbdd/migrations/README.md` (pendiente añadir migraciones SQL numeradas reales).
+Estado: completado con baseline SQL en `bbdd/migrations/000_schema_migrations.sql`, `bbdd/migrations/001_core_schema.sql`, `bbdd/migrations/002_reference_data.sql` y `bbdd/migrations/003_seed_questions.sql`.
 
 Prioridad P2 (producto y UX):
 1. Mejorar responsive desktop/tablet.
