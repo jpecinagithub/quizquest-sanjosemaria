@@ -2,7 +2,14 @@ import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { HttpError } from '../auth/authService.js';
+import { validate } from '../common/validate.js';
 import { createSubjectsRepository } from './subjectsRepository.js';
+import {
+    createSubjectBodySchema,
+    subjectIdParamSchema,
+    updateSubjectBodySchema,
+    uploadSubjectImageBodySchema,
+} from './subjectsSchemas.js';
 import { createSubjectsService } from './subjectsService.js';
 
 const imageDataPattern = /^data:image\/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=]+)$/i;
@@ -58,7 +65,7 @@ export const createAdminSubjectsRouter = ({
         }
     });
 
-    router.post('/', authRequired, adminRequired, async (req, res) => {
+    router.post('/', authRequired, adminRequired, validate(createSubjectBodySchema), async (req, res) => {
         try {
             const response = await subjectsService.createSubject(req.body);
             return res.status(201).json(response);
@@ -67,7 +74,13 @@ export const createAdminSubjectsRouter = ({
         }
     });
 
-    router.put('/:id', authRequired, adminRequired, async (req, res) => {
+    router.put(
+        '/:id',
+        authRequired,
+        adminRequired,
+        validate(subjectIdParamSchema, 'params'),
+        validate(updateSubjectBodySchema),
+        async (req, res) => {
         try {
             const response = await subjectsService.updateSubject(req.params.id, req.body);
             return res.json({ success: true, message: response.message });
@@ -76,23 +89,18 @@ export const createAdminSubjectsRouter = ({
         }
     });
 
-    router.post('/:id/image', authRequired, adminRequired, async (req, res) => {
-        const { imageData } = req.body || {};
-        if (!imageData || typeof imageData !== 'string') {
-            return res.status(400).json({ message: 'imageData es requerido' });
-        }
-
-        let subjectId;
-        try {
-            subjectId = subjectsService.parseAndValidateSubjectId(req.params.id);
-        } catch (error) {
-            return handleError(error, res);
-        }
+    router.post(
+        '/:id/image',
+        authRequired,
+        adminRequired,
+        validate(subjectIdParamSchema, 'params'),
+        validate(uploadSubjectImageBodySchema),
+        async (req, res) => {
+        const { imageData } = req.body;
+        const subjectId = Number(req.params.id);
 
         const match = imageData.match(imageDataPattern);
-        if (!match) {
-            return res.status(400).json({ message: 'Formato de imagen no valido. Usa PNG, JPG/JPEG o WEBP.' });
-        }
+        if (!match) return res.status(400).json({ message: 'Formato de imagen no valido. Usa PNG, JPG/JPEG o WEBP.' });
 
         const format = match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase();
         const extByFormat = { png: 'png', jpeg: 'jpg', webp: 'webp' };
@@ -151,7 +159,7 @@ export const createAdminSubjectsRouter = ({
         }
     });
 
-    router.delete('/:id', authRequired, adminRequired, async (req, res) => {
+    router.delete('/:id', authRequired, adminRequired, validate(subjectIdParamSchema, 'params'), async (req, res) => {
         try {
             const response = await subjectsService.deactivateSubject(req.params.id);
             return res.json(response);

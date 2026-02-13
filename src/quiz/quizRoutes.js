@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { HttpError } from '../auth/authService.js';
+import { validate } from '../common/validate.js';
+import { canStartParamsSchema, finishQuizBodySchema } from './quizSchemas.js';
 import { createQuizRepository } from './quizRepository.js';
 import { createQuizService } from './quizService.js';
 
@@ -26,7 +28,7 @@ export const createQuizRouter = ({
         return res.status(500).json(error);
     };
 
-    router.get('/can-start/:subjectId', authRequired, async (req, res) => {
+    router.get('/can-start/:subjectId', authRequired, validate(canStartParamsSchema, 'params'), async (req, res) => {
         try {
             const response = await quizService.getCanStartStatus(req.auth.userId, req.params.subjectId);
             return res.json(response);
@@ -35,7 +37,7 @@ export const createQuizRouter = ({
         }
     });
 
-    router.post('/finish', authRequired, async (req, res) => {
+    router.post('/finish', authRequired, validate(finishQuizBodySchema), async (req, res) => {
         try {
             const response = await quizService.finishQuiz({
                 authUserId: req.auth.userId,
