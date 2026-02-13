@@ -1,6 +1,6 @@
 import React from 'react';
 
-type AuthMode = 'login' | 'register' | 'forgot';
+type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 
 interface LoginScreenProps {
   mode: AuthMode;
@@ -8,6 +8,7 @@ interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onRegister: (name: string, email: string, password: string) => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
+  onResetPassword: (email: string, token: string, newPassword: string) => Promise<void>;
   isSubmitting?: boolean;
   error?: string | null;
   notice?: string | null;
@@ -22,6 +23,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   onLogin,
   onRegister,
   onForgotPassword,
+  onResetPassword,
   isSubmitting = false,
   error = null,
   notice = null,
@@ -32,11 +34,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
+  const [resetToken, setResetToken] = React.useState('');
   const [validationError, setValidationError] = React.useState<string | null>(null);
 
   const isLoginMode = mode === 'login';
   const isRegisterMode = mode === 'register';
   const isForgotMode = mode === 'forgot';
+  const isResetMode = mode === 'reset';
 
   const clearLocalErrors = () => {
     if (validationError) setValidationError(null);
@@ -51,9 +55,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const isFormReady = React.useMemo(() => {
     if (isForgotMode) return email.trim().length > 0;
+    if (isResetMode) return email.trim().length > 0 && resetToken.trim().length > 0 && password.length > 0 && confirmPassword.length > 0;
     if (isRegisterMode) return name.trim().length > 0 && email.trim().length > 0 && password.length > 0 && confirmPassword.length > 0;
     return email.trim().length > 0 && password.length > 0;
-  }, [isForgotMode, isRegisterMode, name, email, password, confirmPassword]);
+  }, [isForgotMode, isResetMode, isRegisterMode, name, email, password, confirmPassword, resetToken]);
 
   const validateCommon = () => {
     const normalizedEmail = email.trim();
@@ -72,6 +77,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
     if (isForgotMode) {
       await onForgotPassword(email.trim());
+      return;
+    }
+
+    if (isResetMode) {
+      if (password.length < 6) {
+        setValidationError('La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setValidationError('Las contraseñas no coinciden.');
+        return;
+      }
+      await onResetPassword(email.trim(), resetToken.trim(), password);
       return;
     }
 
@@ -194,7 +212,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                     clearLocalErrors();
                   }}
                   required
-                  autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+                  autoComplete={isRegisterMode || isResetMode ? 'new-password' : 'current-password'}
                 />
                 <button
                   type="button"
@@ -207,7 +225,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           )}
 
-          {isRegisterMode && (
+          {isResetMode && (
+            <div className="relative group">
+              <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5 ml-1">Codigo de recuperacion</label>
+              <div className="relative">
+                <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">pin</span>
+                <input
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  placeholder="Pega el codigo recibido por email"
+                  type="text"
+                  value={resetToken}
+                  onChange={(event) => {
+                    setResetToken(event.target.value);
+                    clearLocalErrors();
+                  }}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {(isRegisterMode || isResetMode) && (
             <div className="relative group">
               <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5 ml-1">Confirmar contrasena</label>
               <div className="relative">
@@ -252,10 +290,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             {isSubmitting && 'PROCESANDO...'}
             {!isSubmitting && isLoginMode && 'EMPEZAR'}
             {!isSubmitting && isRegisterMode && 'CREAR CUENTA'}
-            {!isSubmitting && isForgotMode && 'ENVIAR ENLACE'}
+            {!isSubmitting && isForgotMode && 'ENVIAR CODIGO'}
+            {!isSubmitting && isResetMode && 'CAMBIAR CONTRASENA'}
           </span>
           <span className={`material-icons-round text-xl ${isSubmitting ? 'animate-spin' : ''}`}>
-            {isSubmitting ? 'progress_activity' : isForgotMode ? 'mail' : 'bolt'}
+            {isSubmitting ? 'progress_activity' : isForgotMode ? 'mail' : isResetMode ? 'key' : 'bolt'}
           </span>
         </button>
 
@@ -263,7 +302,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
       <footer className="mt-auto pt-8 pb-4">
         <p className="text-sm text-slate-400">
-          {isForgotMode ? (
+          {isForgotMode || isResetMode ? (
             <>
               Volver a{' '}
               <button type="button" onClick={() => handleModeChange('login')} className="text-primary font-bold hover:text-blue-400 transition-colors">

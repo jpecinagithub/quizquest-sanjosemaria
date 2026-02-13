@@ -12,10 +12,10 @@ import { generateQuizQuestions } from './services/geminiService';
 import { MOCK_CLASSIFICATION_BASE, MOCK_QUESTIONS, SUBJECTS } from './constants';
 import * as api from './services/api';
 import { useAuth } from './context/AuthContext';
-import { AuthApiError, forgotPasswordRequest } from './services/authApi';
+import { AuthApiError, forgotPasswordRequest, resetPasswordRequest } from './services/authApi';
 import { ApiError } from './services/api';
 
-type AuthMode = 'login' | 'register' | 'forgot';
+type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 
 const App: React.FC = () => {
   const { user, token, isAuthenticated, isLoading: isAuthLoading, login, register, logout } = useAuth();
@@ -167,6 +167,22 @@ const App: React.FC = () => {
 
     try {
       const response = await forgotPasswordRequest(email);
+      setAuthNotice(response.message);
+      setAuthMode('reset');
+    } catch (error) {
+      setAuthError(mapAuthError(error));
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (email: string, tokenValue: string, newPassword: string) => {
+    setAuthError(null);
+    setAuthNotice(null);
+    setIsAuthSubmitting(true);
+
+    try {
+      const response = await resetPasswordRequest(email, tokenValue, newPassword);
       setAuthNotice(response.message);
       setAuthMode('login');
     } catch (error) {
@@ -396,6 +412,7 @@ const App: React.FC = () => {
             onLogin={handleLogin}
             onRegister={handleRegister}
             onForgotPassword={handleForgotPassword}
+            onResetPassword={handleResetPassword}
             mode={authMode}
             onModeChange={setAuthMode}
             isSubmitting={isAuthSubmitting}

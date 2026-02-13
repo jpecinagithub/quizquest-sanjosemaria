@@ -155,6 +155,33 @@ export const forgotPasswordRequest = async (email: string): Promise<{ success: b
   }
 };
 
+export const resetPasswordRequest = async (
+  email: string,
+  token: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token, newPassword }),
+    });
+
+    if (!response.ok) {
+      const parsed = await parseApiError(response);
+      throw new AuthApiError(parsed.message, { status: parsed.status, type: 'http' });
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof AuthApiError) throw error;
+    if (error instanceof TypeError) {
+      throw new AuthApiError('No se pudo conectar con el servidor', { type: 'network' });
+    }
+    throw new AuthApiError('Error inesperado en autenticacion', { type: 'unknown' });
+  }
+};
+
 export const logoutRequest = async (token: string): Promise<void> => {
   try {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/logout`, {

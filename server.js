@@ -2,6 +2,7 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -15,9 +16,37 @@ app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')))
 const sessions = new Map();
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 8);
 const DAILY_QUIZ_LIMIT = 2;
+const PASSWORD_RESET_TOKEN_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30);
+const appBaseUrl = process.env.APP_BASE_URL || '';
 const ADMIN_USER_RULE = {
     id: 1,
     name: 'Jon',
+};
+
+const mailTransport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+    },
+});
+
+const sendPasswordResetEmail = async (email, token) => {
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+        throw new Error('Credenciales de Gmail no configuradas');
+    }
+
+    const resetHint = appBaseUrl
+        ? `Abre ${appBaseUrl} y usa el codigo en la pantalla de recuperacion.`
+        : 'Abre la app y usa este codigo en la pantalla de recuperacion.';
+    const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: 'QuizQuest - Recuperacion de contrasena',
+        text: `Hemos recibido una solicitud para restablecer tu contrasena.\n\nCodigo de recuperacion: ${token}\n\nEste codigo caduca en ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutos.\n${resetHint}\n\nSi no solicitaste este cambio, ignora este mensaje.`,
+    };
+
+    await mailTransport.sendMail(mailOptions);
 };
 
 const isAdminUser = (userRow) => {
@@ -211,6 +240,30 @@ const ensureSubjectsActivoColumn = () => {
 
 ensureSubjectsActivoColumn();
 
+const ensurePasswordResetsTable = () => {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token VARCHAR(128) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            INDEX idx_password_resets_user (user_id),
+            INDEX idx_password_resets_token (token)
+        )
+    `;
+
+    db.query(sql, (err) => {
+        if (err) {
+            console.error('No se pudo crear/verificar la tabla password_resets:', err.message);
+        }
+    });
+};
+
+ensurePasswordResetsTable();
+
 // --- ENDPOINTS ---
 
 // 1. Login basico
@@ -270,9 +323,78 @@ app.post('/api/auth/register', (req, res) => {
 app.post('/api/auth/forgot-password', (req, res) => {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ message: 'Email requerido' });
-    return res.json({
+
+    const genericResponse = {
         success: true,
-        message: 'Si el correo existe, recibiras instrucciones para recuperar tu cuenta.'
+        message: 'Si el correo existe, recibiras un codigo de recuperacion.'
+    };
+
+    const selectSql = 'SELECT id, email FROM users WHERE email = ? LIMIT 1';
+    db.query(selectSql, [email], async (err, results) => {
+        if (err) return res.status(500).json(err);
+        if (!results.length) return res.json(genericResponse);
+
+        const userId = Number(results[0].id);
+        const token = randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
+        const insertSql = `
+            INSERT INTO password_resets (user_id, token, expires_at, used_at)
+            VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)
+        `;
+
+        db.query(insertSql, [userId, token, PASSWORD_RESET_TOKEN_TTL_MINUTES], async (insertErr) => {
+            if (insertErr) return res.status(500).json(insertErr);
+
+            try {
+                await sendPasswordResetEmail(email, token);
+                return res.json(genericResponse);
+            } catch (mailErr) {
+                return res.status(500).json({ message: 'No se pudo enviar el correo de recuperacion.' });
+            }
+        });
+    });
+});
+
+app.post('/api/auth/reset-password', (req, res) => {
+    const { email, token, newPassword } = req.body || {};
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ message: 'email, token y newPassword son requeridos' });
+    }
+    if (String(newPassword).length < 6) {
+        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    const selectUserSql = 'SELECT id FROM users WHERE email = ? LIMIT 1';
+    db.query(selectUserSql, [email], (userErr, userRows) => {
+        if (userErr) return res.status(500).json(userErr);
+        if (!userRows.length) return res.status(400).json({ message: 'Codigo invalido o expirado' });
+
+        const userId = Number(userRows[0].id);
+        const selectTokenSql = `
+            SELECT id
+            FROM password_resets
+            WHERE user_id = ?
+              AND token = ?
+              AND used_at IS NULL
+              AND expires_at > NOW()
+            ORDER BY id DESC
+            LIMIT 1
+        `;
+
+        db.query(selectTokenSql, [userId, String(token).trim()], (tokenErr, tokenRows) => {
+            if (tokenErr) return res.status(500).json(tokenErr);
+            if (!tokenRows.length) return res.status(400).json({ message: 'Codigo invalido o expirado' });
+
+            const resetId = Number(tokenRows[0].id);
+            const updatePasswordSql = 'UPDATE users SET password = ? WHERE id = ?';
+            db.query(updatePasswordSql, [String(newPassword), userId], (passErr) => {
+                if (passErr) return res.status(500).json(passErr);
+
+                db.query('UPDATE password_resets SET used_at = NOW() WHERE id = ?', [resetId], (markErr) => {
+                    if (markErr) return res.status(500).json(markErr);
+                    return res.json({ success: true, message: 'Contrasena restablecida correctamente.' });
+                });
+            });
+        });
     });
 });
 
