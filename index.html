@@ -1,34 +1,44 @@
-
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-name" content="QuizQuest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="QuizQuest">
+    <meta name="description" content="App de tests de inteligencia y progreso por asignaturas.">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0d59f2">
     <title>QuizQuest</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">`r`n    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     <script>
         tailwind.config = {
-            darkMode: "class",
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#0d59f2",
-                        "accent-purple": "#a855f7",
-                        "accent-cyan": "#06b6d4",
-                        "background-light": "#f5f6f8",
-                        "background-dark": "#101622",
+                        'primary': '#0d59f2',
+                        'accent-purple': '#a855f7',
+                        'accent-cyan': '#06b6d4',
+                        'background-light': '#f5f6f8',
+                        'background-dark': '#101622',
                     },
                     fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
+                        'display': ['Lexend', 'sans-serif']
                     },
                     borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
+                        'DEFAULT': '0.25rem',
+                        'lg': '0.5rem',
+                        'xl': '0.75rem',
+                        'full': '9999px'
                     },
                 },
             },
@@ -76,3 +86,4 @@
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
+

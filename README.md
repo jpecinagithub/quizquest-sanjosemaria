@@ -115,3 +115,28 @@ La aplicación utiliza React y Tailwind CSS.
 - Validaciones centralizadas para payloads de auth.
 - Base de migraciones creada: `bbdd/migrations/README.md`.
 - Smoke test de auth: `npm run test:smoke:auth` (requiere API levantada).
+
+## 📲 PWA (Instalable)
+
+La app ya esta configurada como Progressive Web App con:
+- `manifest.webmanifest` generado en build.
+- Service Worker con precache y runtime cache (`vite-plugin-pwa`).
+- Iconos de app (`public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable-512.png`, `public/apple-touch-icon.png`, `public/favicon.svg`).
+
+### Validacion rapida
+
+1. Ejecutar build:
+   ```bash
+   npm run build
+   ```
+2. Servir la app en HTTPS (Railway o `npm run preview`).
+3. Abrir DevTools > Application:
+   - `Manifest` visible y valido.
+   - `Service Workers` activo.
+4. Probar instalacion:
+   - Chrome/Edge Android/Desktop: boton `Install app`.
+   - iOS Safari: `Compartir > Anadir a pantalla de inicio`.
+
+### Nota
+
+La cache offline cubre shell y assets estaticos. Las llamadas API siguen dependiendo de conectividad.
