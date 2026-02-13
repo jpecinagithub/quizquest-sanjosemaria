@@ -98,3 +98,16 @@ La aplicación utiliza React y Tailwind CSS.
 - **Gemini API Error**: Verifica que tu API Key sea válida y que tengas cuota disponible en Google AI Studio.
 - **Conexión MySQL**: Si usas XAMPP, el usuario suele ser `root` y el password vacío.
 - **No llega email de recuperación**: revisa `RESEND_API_KEY`, `MAIL_FROM` y los logs del backend.
+
+---
+
+## ✅ Continuidad Técnica (P1) ya aplicada parcialmente
+
+- Refactor de autenticación a capas:
+  - `src/auth/authRoutes.js`
+  - `src/auth/authService.js`
+  - `src/auth/authRepository.js`
+  - `src/auth/authValidators.js`
+- Validaciones centralizadas para payloads de auth.
+- Base de migraciones creada: `bbdd/migrations/README.md`.
+- Smoke test de auth: `npm run test:smoke:auth` (requiere API levantada).

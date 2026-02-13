@@ -209,9 +209,13 @@ Prioridad P0 (seguridad y continuidad):
 
 Prioridad P1 (calidad y mantenimiento):
 1. Extraer lógica de `server.js` en capas (routes/services/repositories).
+Estado: parcial completado para autenticación en `src/auth/*`.
 2. Añadir validación robusta de payloads (por ejemplo `zod` o `joi`).
+Estado: parcial completado con validadores propios para autenticación (`src/auth/authValidators.js`).
 3. Añadir tests de API críticos (auth, forgot/reset, quiz finish).
+Estado: parcial completado con smoke test de autenticación `tests/auth.smoke.mjs`.
 4. Añadir migrations versionadas para MySQL.
+Estado: base creada en `bbdd/migrations/README.md` (pendiente añadir migraciones SQL numeradas reales).
 
 Prioridad P2 (producto y UX):
 1. Mejorar responsive desktop/tablet.

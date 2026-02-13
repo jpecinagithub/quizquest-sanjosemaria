@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { createAuthRouter } from './src/auth/authRoutes.js';
 
 dotenv.config();
 
@@ -335,151 +336,17 @@ ensurePasswordResetsTable();
 
 // --- ENDPOINTS ---
 
-// 1. Login basico
-app.post('/api/auth/login', authRateLimit, (req, res) => {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email y password son requeridos' });
-    }
-
-    const sql = 'SELECT id, name, email, password, profile_pic, total_xp FROM users WHERE email = ? LIMIT 1';
-    db.query(sql, [email], (err, results) => {
-        if (err) return res.status(500).json(err);
-        if (!results.length) return res.status(401).json({ message: 'Credenciales invalidas' });
-
-        const user = results[0];
-        const passwordMatches = isPasswordMatch(user.password, password);
-        if (!passwordMatches) return res.status(401).json({ message: 'Credenciales invalidas' });
-
-        const token = createSession(user.id);
-        res.json({ token, user: sanitizeUser(user) });
-    });
-});
-
-// 2. Registro
-app.post('/api/auth/register', authRateLimit, (req, res) => {
-    const { name, email, password } = req.body || {};
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: 'Nombre, email y password son requeridos' });
-    }
-
-    if (String(password).length < 6) {
-        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
-    }
-
-    const insertSql = 'INSERT INTO users (name, email, password, total_xp) VALUES (?, ?, ?, 0)';
-    db.query(insertSql, [name, email, password], (err, result) => {
-        if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({ message: 'Ese email ya esta registrado' });
-            }
-            return res.status(500).json(err);
-        }
-
-        const userId = result.insertId;
-        const selectSql = 'SELECT id, name, email, profile_pic, total_xp FROM users WHERE id = ? LIMIT 1';
-        db.query(selectSql, [userId], (err2, results) => {
-            if (err2) return res.status(500).json(err2);
-            if (!results.length) return res.status(500).json({ message: 'No se pudo crear el usuario' });
-
-            const token = createSession(userId);
-            res.status(201).json({ token, user: sanitizeUser(results[0]) });
-        });
-    });
-});
-
-// 3. Recuperar password (codigo por email con Resend)
-app.post('/api/auth/forgot-password', authRateLimit, (req, res) => {
-    const { email } = req.body || {};
-    if (!email) return res.status(400).json({ message: 'Email requerido' });
-
-    const genericResponse = {
-        success: true,
-        message: 'Si el correo existe, recibiras un codigo de recuperacion.'
-    };
-
-    const selectSql = 'SELECT id, email FROM users WHERE email = ? LIMIT 1';
-    db.query(selectSql, [email], async (err, results) => {
-        if (err) return res.status(500).json(err);
-        if (!results.length) return res.json(genericResponse);
-
-        const userId = Number(results[0].id);
-        const token = randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
-        const insertSql = `
-            INSERT INTO password_resets (user_id, token, expires_at, used_at)
-            VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)
-        `;
-
-        db.query(insertSql, [userId, token, PASSWORD_RESET_TOKEN_TTL_MINUTES], (insertErr) => {
-            if (insertErr) return res.status(500).json(insertErr);
-            res.json(genericResponse);
-            sendPasswordResetEmail(email, token).catch((mailErr) => {
-                console.error('Error enviando correo de recuperacion:', mailErr);
-            });
-        });
-    });
-});
-
-app.post('/api/auth/reset-password', authRateLimit, (req, res) => {
-    const { email, token, newPassword } = req.body || {};
-    if (!email || !token || !newPassword) {
-        return res.status(400).json({ message: 'email, token y newPassword son requeridos' });
-    }
-    if (String(newPassword).length < 6) {
-        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
-    }
-
-    const selectUserSql = 'SELECT id FROM users WHERE email = ? LIMIT 1';
-    db.query(selectUserSql, [email], (userErr, userRows) => {
-        if (userErr) return res.status(500).json(userErr);
-        if (!userRows.length) return res.status(400).json({ message: 'Codigo invalido o expirado' });
-
-        const userId = Number(userRows[0].id);
-        const selectTokenSql = `
-            SELECT id
-            FROM password_resets
-            WHERE user_id = ?
-              AND token = ?
-              AND used_at IS NULL
-              AND expires_at > NOW()
-            ORDER BY id DESC
-            LIMIT 1
-        `;
-
-        db.query(selectTokenSql, [userId, String(token).trim()], (tokenErr, tokenRows) => {
-            if (tokenErr) return res.status(500).json(tokenErr);
-            if (!tokenRows.length) return res.status(400).json({ message: 'Codigo invalido o expirado' });
-
-            const resetId = Number(tokenRows[0].id);
-            const updatePasswordSql = 'UPDATE users SET password = ? WHERE id = ?';
-            db.query(updatePasswordSql, [String(newPassword), userId], (passErr) => {
-                if (passErr) return res.status(500).json(passErr);
-
-                db.query('UPDATE password_resets SET used_at = NOW() WHERE id = ?', [resetId], (markErr) => {
-                    if (markErr) return res.status(500).json(markErr);
-                    return res.json({ success: true, message: 'Contrasena restablecida correctamente.' });
-                });
-            });
-        });
-    });
-});
-
-// 4. Logout
-app.post('/api/auth/logout', authRequired, (req, res) => {
-    sessions.delete(req.auth.token);
-    res.json({ success: true });
-});
-
-// 5. Usuario autenticado actual
-app.get('/api/auth/me', authRequired, (req, res) => {
-    const userId = req.auth.userId;
-    const sql = 'SELECT id, name, email, password, profile_pic, total_xp FROM users WHERE id = ? LIMIT 1';
-    db.query(sql, [userId], (err, results) => {
-        if (err) return res.status(500).json(err);
-        if (!results.length) return res.status(401).json({ message: 'Sesion invalida' });
-        res.json({ user: sanitizeUser(results[0]) });
-    });
-});
+app.use('/api/auth', createAuthRouter({
+    db,
+    createSession,
+    sanitizeUser,
+    isPasswordMatch,
+    sendPasswordResetEmail,
+    passwordResetTokenTtlMinutes: PASSWORD_RESET_TOKEN_TTL_MINUTES,
+    authRateLimit,
+    authRequired,
+    sessions,
+}));
 
 // 6. Obtener perfil de usuario
 app.get('/api/user/:id', authRequired, (req, res) => {
