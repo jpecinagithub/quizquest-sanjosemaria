@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { randomUUID } from 'crypto';
+import dns from 'node:dns/promises';
 import fs from 'fs';
 import path from 'path';
 
@@ -26,13 +27,27 @@ const ADMIN_USER_RULE = {
 const gmailUser = (process.env.GMAIL_USER || '').trim();
 const gmailAppPassword = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
 
-const mailTransport = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: gmailUser,
-        pass: gmailAppPassword,
-    },
-});
+const createMailTransport = async () => {
+    const resolvedIpv4 = await dns.resolve4('smtp.gmail.com');
+    const smtpHostIpv4 = resolvedIpv4?.[0];
+    if (!smtpHostIpv4) {
+        throw new Error('No se pudo resolver smtp.gmail.com a IPv4');
+    }
+
+    return nodemailer.createTransport({
+        host: smtpHostIpv4,
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        auth: {
+            user: gmailUser,
+            pass: gmailAppPassword,
+        },
+        tls: {
+            servername: 'smtp.gmail.com',
+        },
+    });
+};
 
 const sendPasswordResetEmail = async (email, token) => {
     if (!gmailUser || !gmailAppPassword) {
@@ -49,7 +64,8 @@ const sendPasswordResetEmail = async (email, token) => {
         text: `Hemos recibido una solicitud para restablecer tu contrasena.\n\nCodigo de recuperacion: ${token}\n\nEste codigo caduca en ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutos.\n${resetHint}\n\nSi no solicitaste este cambio, ignora este mensaje.`,
     };
 
-    await mailTransport.sendMail(mailOptions);
+    const transport = await createMailTransport();
+    await transport.sendMail(mailOptions);
 };
 
 const isAdminUser = (userRow) => {
