@@ -102,7 +102,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ userData, onBack, onUpl
   };
 
   return (
-    <main className="flex-1 px-6 pt-6 pb-10">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-10">
       <header className="flex items-center justify-between mb-6">
         <button
           type="button"
@@ -120,17 +120,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ userData, onBack, onUpl
       </header>
 
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <section className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+        <section className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 sm:p-5">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">Foto de perfil</h2>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 min-w-0">
             <img
               src={previewSrc}
               alt="Vista previa del perfil"
-              className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+              className="w-16 h-16 rounded-full object-cover border-2 border-primary shrink-0"
             />
-            <div>
-              <p className="font-semibold">{userData?.name || 'Usuario'}</p>
-              <p className="text-xs text-slate-400">{userData?.email || 'Sin email'}</p>
+            <div className="min-w-0">
+              <p className="font-semibold truncate">{userData?.name || 'Usuario'}</p>
+              <p className="text-xs text-slate-400 truncate">{userData?.email || 'Sin email'}</p>
             </div>
           </div>
           <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5 ml-1">
@@ -144,7 +144,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ userData, onBack, onUpl
           />
         </section>
 
-        <section className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+        <section className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 sm:p-5">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">Cambiar contrasena</h2>
           <div className="space-y-3">
             <input

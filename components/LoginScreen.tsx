@@ -115,7 +115,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8 w-full">
+    <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-10 pb-8 w-full">
+      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-gradient-to-br from-primary via-accent-purple to-accent-cyan p-0.5 mb-6">
           <div className="w-full h-full bg-background-dark rounded-[10px] flex items-center justify-center">
@@ -323,6 +324,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           )}
         </p>
       </footer>
+      </div>
     </main>
   );
 };

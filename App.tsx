@@ -394,7 +394,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-dark text-slate-100 flex flex-col max-w-[430px] mx-auto relative overflow-hidden shadow-2xl">
+    <div className="min-h-screen w-full bg-background-dark text-slate-100 flex flex-col relative overflow-x-hidden">
       <div className="fixed inset-0 z-0 bg-grid opacity-30 pointer-events-none"></div>
       
       {(isQuizLoading || isAuthLoading) && (
@@ -470,7 +470,7 @@ const App: React.FC = () => {
         )}
       </div>
 
-      <div className="h-1 bg-gradient-to-r from-primary via-accent-purple to-accent-cyan opacity-50 sticky bottom-0 z-[60]"></div>
+      <div className="h-1 bg-gradient-to-r from-primary via-accent-purple to-accent-cyan opacity-50 sticky bottom-0 z-[60] w-full"></div>
     </div>
   );
 };

@@ -24,26 +24,33 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 bg-background-dark/80 ios-blur border-b border-primary/10 px-6 py-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 bg-background-dark/80 ios-blur border-b border-primary/10 px-4 sm:px-6 py-4">
+        <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="relative">
               <img 
                 alt={displayName} 
-                className="w-12 h-12 rounded-full border-2 border-primary" 
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 border-primary" 
                 src={userData?.profile_pic || "https://picsum.photos/seed/alex/200"}
               />
               <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-background-dark"></div>
             </div>
-            <div>
-              <h1 className="text-lg text-slate-100 font-bold">{displayName}</h1>
-              <div className="flex items-center gap-3">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg text-slate-100 font-bold truncate">{displayName}</h1>
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <button
                   type="button"
                   onClick={onOpenSettings}
                   className="text-xs text-primary font-semibold hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
                 >
                   Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenClassification}
+                  className="text-xs text-cyan-300 font-semibold hover:text-cyan-200 transition-colors underline-offset-2 hover:underline"
+                >
+                  Clasificacion
                 </button>
                 {userData?.is_admin && (
                   <button
@@ -57,10 +64,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/20 border border-primary/30 rounded-xl px-3 py-2 flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="bg-primary/20 border border-primary/30 rounded-xl px-2 sm:px-3 py-2 flex items-center gap-1.5 sm:gap-2">
               <span className="material-icons-outlined text-yellow-500 text-sm">stars</span>
-              <span className="text-primary font-bold">{displayXp.toLocaleString()} XP</span>
+              <span className="text-primary font-bold text-xs sm:text-sm md:text-base whitespace-nowrap">{displayXp.toLocaleString()} XP</span>
             </div>
             <button
               type="button"
@@ -75,7 +82,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
         </div>
       </header>
 
-      <main className="px-6 pt-6 pb-32">
+      <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-28 lg:pb-10">
         {notice && (
           <p className="mb-4 text-sm rounded-xl px-4 py-2 border text-amber-200 bg-amber-500/10 border-amber-500/30">
             {notice}
@@ -94,7 +101,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
 
         <div>
           <h2 className="text-xl font-bold mb-4">Asignaturas</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {displaySubjects.map((subject) => {
               const cardImage = subject.imageUrl || subjectImageById[subject.id];
               return (
@@ -107,7 +114,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
                   <img
                     src={cardImage}
                     alt={subject.name}
-                    className="w-20 h-20 rounded-xl object-cover mb-4 border border-slate-600/60"
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover mb-4 border border-slate-600/60"
                     loading="lazy"
                   />
                 ) : (
@@ -115,7 +122,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
                     <span className="material-icons-outlined text-3xl">menu_book</span>
                   </div>
                 )}
-                <h3 className="font-bold text-lg mb-1">{subject.name}</h3>
+                <h3 className="font-bold text-base sm:text-lg mb-1">{subject.name}</h3>
                 <p className="text-xs text-slate-400 mb-4">{subject.description}</p>
                 <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                   <div 
@@ -131,7 +138,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onStartQuiz, onLogout
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-background-dark/90 ios-blur border-t border-slate-800 px-6 py-4 pb-8 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-background-dark/90 ios-blur border-t border-slate-800 px-4 sm:px-6 py-4 pb-8 z-50 lg:hidden">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button className="flex flex-col items-center gap-1 text-primary">
             <span className="material-icons-outlined">home</span>

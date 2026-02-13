@@ -29,7 +29,7 @@ const ClassificationScreen: React.FC<ClassificationScreenProps> = ({ onBack, use
   }, [currentUserName, currentUserXp]);
 
   return (
-    <main className="flex-1 px-6 pt-6 pb-10">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-10">
       <header className="flex items-center justify-between mb-6">
         <button
           type="button"
@@ -53,26 +53,26 @@ const ClassificationScreen: React.FC<ClassificationScreenProps> = ({ onBack, use
           return (
             <div
               key={`${row.name}-${position}`}
-              className={`flex items-center justify-between px-4 py-3 border-b border-slate-700/40 last:border-b-0 ${
+              className={`flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-700/40 last:border-b-0 ${
                 isCurrentUser ? 'bg-primary/10' : ''
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-700/70 flex items-center justify-center text-sm font-bold text-slate-200">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-700/70 flex items-center justify-center text-sm font-bold text-slate-200 shrink-0">
                   {position}
                 </div>
                 <img
                   src={isCurrentUser && userData?.profile_pic ? userData.profile_pic : row.profile_pic}
                   alt={row.name}
-                  className="w-10 h-10 rounded-full object-cover border border-slate-600/60"
+                  className="w-10 h-10 rounded-full object-cover border border-slate-600/60 shrink-0"
                 />
-                <div>
-                  <p className="font-semibold">{row.name}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold truncate">{row.name}</p>
                   {isCurrentUser && <p className="text-[10px] text-primary uppercase tracking-wider">Tu posicion</p>}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-primary">{row.xp.toLocaleString()} XP</p>
+              <div className="text-right shrink-0">
+                <p className="font-bold text-primary text-sm sm:text-base whitespace-nowrap">{row.xp.toLocaleString()} XP</p>
               </div>
             </div>
           );

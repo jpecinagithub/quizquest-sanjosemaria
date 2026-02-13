@@ -47,8 +47,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-6 py-6 flex flex-col space-y-4">
+    <div className="flex flex-col min-h-screen w-full max-w-5xl mx-auto">
+      <header className="px-4 sm:px-6 py-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <button 
             onClick={onClose}
@@ -56,9 +56,11 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
           >
             <span className="material-icons">close</span>
           </button>
-          <div className="flex flex-col items-center">
-            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold">{state.subject.name}</span>
-            <span className="text-sm font-medium">Pregunta {currentIndex + 1} de {state.questions.length}</span>
+          <div className="flex flex-col items-center min-w-0 px-2">
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-slate-400 font-bold truncate max-w-[180px] sm:max-w-[320px]">
+              {state.subject.name}
+            </span>
+            <span className="text-xs sm:text-sm font-medium">Pregunta {currentIndex + 1} de {state.questions.length}</span>
           </div>
           <div className="relative flex items-center justify-center">
             <svg className="w-10 h-10 transform -rotate-90">
@@ -73,8 +75,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
         </div>
       </header>
 
-      <main className="flex-1 px-6 flex flex-col justify-center space-y-8">
-        <div className="relative bg-slate-800/50 border border-slate-700/50 p-8 rounded-xl shadow-2xl">
+      <main className="flex-1 px-4 sm:px-6 flex flex-col justify-center space-y-8">
+        <div className="relative bg-slate-800/50 border border-slate-700/50 p-5 sm:p-8 rounded-xl shadow-2xl">
           <div className="absolute -top-3 left-6 px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-tighter">
             Opcion multiple
           </div>
@@ -99,7 +101,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
               }`}>
                 {String.fromCharCode(65 + idx)}
               </div>
-              <span className={`ml-4 text-lg font-medium ${selectedOption === idx ? 'text-white' : 'text-slate-200'}`}>
+              <span className={`ml-3 sm:ml-4 text-base sm:text-lg font-medium ${selectedOption === idx ? 'text-white' : 'text-slate-200'}`}>
                 {option}
               </span>
               <div className="ml-auto">
@@ -112,10 +114,10 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ state, onFinish, onClose }) => 
         </div>
       </main>
 
-      <footer className="px-6 py-8 flex items-center justify-between">
+      <footer className="px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <button 
           onClick={handleNext}
-          className="text-slate-400 font-semibold px-4 py-2 hover:bg-slate-800 rounded-lg transition-colors"
+          className="text-slate-400 font-semibold px-4 py-2 hover:bg-slate-800 rounded-lg transition-colors sm:self-start"
         >
           <span>Saltar pregunta</span>
         </button>

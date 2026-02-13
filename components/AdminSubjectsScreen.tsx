@@ -192,7 +192,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
   };
 
   return (
-    <main className="flex-1 px-6 pt-6 pb-10">
+    <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-10">
       <header className="flex items-center justify-between mb-6">
         <button
           type="button"
@@ -209,7 +209,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
         </div>
       </header>
 
-      <form className="space-y-3 bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 mb-6" onSubmit={handleSubmit}>
+      <form className="space-y-3 bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 sm:p-5 mb-6" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-3">
           <input
             className="bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 px-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -234,10 +234,10 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
             className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-2 px-3 text-white file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-blue-600"
           />
           {imagePreview && (
-            <img src={imagePreview} alt="Previsualizacion asignatura" className="w-full h-28 object-cover rounded-lg border border-slate-700/60" />
+            <img src={imagePreview} alt="Previsualizacion asignatura" className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-700/60" />
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
             disabled={saving}
@@ -275,8 +275,8 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
         ) : (
           subjects.map((subject) => (
             <div key={subject.id} className="px-4 py-3 border-b last:border-b-0 border-slate-700/40">
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="min-w-0">
                   <p className="font-semibold">{subject.name}</p>
                   <p className="text-xs text-slate-400">ID {subject.id}</p>
                   <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 ${subject.activo ? 'text-emerald-300' : 'text-amber-300'}`}>
@@ -290,7 +290,7 @@ const AdminSubjectsScreen: React.FC<AdminSubjectsScreenProps> = ({ token, onBack
                     className="w-12 h-12 rounded-lg object-cover border border-slate-700/60"
                   />
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 sm:justify-end">
                   <button
                     type="button"
                     onClick={() => handleEdit(subject)}
