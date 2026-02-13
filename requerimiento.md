@@ -209,7 +209,7 @@ Prioridad P0 (seguridad y continuidad):
 
 Prioridad P1 (calidad y mantenimiento):
 1. Extraer lógica de `server.js` en capas (routes/services/repositories).
-Estado: parcial completado para autenticación en `src/auth/*`.
+Estado: avanzado, aplicado en `src/auth/*`, `src/users/*`, `src/subjects/*`, `src/quiz/*`.
 2. Añadir validación robusta de payloads (por ejemplo `zod` o `joi`).
 Estado: parcial completado con validadores propios para autenticación (`src/auth/authValidators.js`).
 3. Añadir tests de API críticos (auth, forgot/reset, quiz finish).

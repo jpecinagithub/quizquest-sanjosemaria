@@ -108,6 +108,10 @@ La aplicación utiliza React y Tailwind CSS.
   - `src/auth/authService.js`
   - `src/auth/authRepository.js`
   - `src/auth/authValidators.js`
+- Refactor por capas de dominios principales:
+  - `src/users/*`
+  - `src/subjects/*`
+  - `src/quiz/*`
 - Validaciones centralizadas para payloads de auth.
 - Base de migraciones creada: `bbdd/migrations/README.md`.
 - Smoke test de auth: `npm run test:smoke:auth` (requiere API levantada).
