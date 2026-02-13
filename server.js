@@ -39,6 +39,9 @@ const createMailTransport = async () => {
         port: 587,
         secure: false,
         requireTLS: true,
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
         auth: {
             user: gmailUser,
             pass: gmailAppPassword,
@@ -360,16 +363,12 @@ app.post('/api/auth/forgot-password', (req, res) => {
             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)
         `;
 
-        db.query(insertSql, [userId, token, PASSWORD_RESET_TOKEN_TTL_MINUTES], async (insertErr) => {
+        db.query(insertSql, [userId, token, PASSWORD_RESET_TOKEN_TTL_MINUTES], (insertErr) => {
             if (insertErr) return res.status(500).json(insertErr);
-
-            try {
-                await sendPasswordResetEmail(email, token);
-                return res.json(genericResponse);
-            } catch (mailErr) {
+            res.json(genericResponse);
+            sendPasswordResetEmail(email, token).catch((mailErr) => {
                 console.error('Error enviando correo de recuperacion:', mailErr);
-                return res.status(500).json({ message: 'No se pudo enviar el correo de recuperacion.' });
-            }
+            });
         });
     });
 });
