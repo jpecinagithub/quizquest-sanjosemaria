@@ -2,9 +2,7 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
 import { randomUUID } from 'crypto';
-import dns from 'node:dns/promises';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,51 +22,37 @@ const ADMIN_USER_RULE = {
     name: 'Jon',
 };
 
-const gmailUser = (process.env.GMAIL_USER || '').trim();
-const gmailAppPassword = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
-
-const createMailTransport = async () => {
-    const resolvedIpv4 = await dns.resolve4('smtp.gmail.com');
-    const smtpHostIpv4 = resolvedIpv4?.[0];
-    if (!smtpHostIpv4) {
-        throw new Error('No se pudo resolver smtp.gmail.com a IPv4');
-    }
-
-    return nodemailer.createTransport({
-        host: smtpHostIpv4,
-        port: 587,
-        secure: false,
-        requireTLS: true,
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 10000,
-        auth: {
-            user: gmailUser,
-            pass: gmailAppPassword,
-        },
-        tls: {
-            servername: 'smtp.gmail.com',
-        },
-    });
-};
+const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+const mailFrom = (process.env.MAIL_FROM || 'onboarding@resend.dev').trim();
 
 const sendPasswordResetEmail = async (email, token) => {
-    if (!gmailUser || !gmailAppPassword) {
-        throw new Error('Credenciales de Gmail no configuradas');
+    if (!resendApiKey) {
+        throw new Error('RESEND_API_KEY no configurada');
     }
 
     const resetHint = appBaseUrl
         ? `Abre ${appBaseUrl} y usa el codigo en la pantalla de recuperacion.`
         : 'Abre la app y usa este codigo en la pantalla de recuperacion.';
-    const mailOptions = {
-        from: gmailUser,
-        to: email,
+    const payload = {
+        from: mailFrom,
+        to: [email],
         subject: 'QuizQuest - Recuperacion de contrasena',
         text: `Hemos recibido una solicitud para restablecer tu contrasena.\n\nCodigo de recuperacion: ${token}\n\nEste codigo caduca en ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutos.\n${resetHint}\n\nSi no solicitaste este cambio, ignora este mensaje.`,
     };
 
-    const transport = await createMailTransport();
-    await transport.sendMail(mailOptions);
+    const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const responseText = await response.text();
+        throw new Error(`Resend fallo (${response.status}): ${responseText}`);
+    }
 };
 
 const isAdminUser = (userRow) => {
