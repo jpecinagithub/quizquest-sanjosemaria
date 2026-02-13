@@ -9,19 +9,45 @@ import { createAuthRouter } from './src/auth/authRoutes.js';
 
 dotenv.config();
 
-const isProduction = process.env.NODE_ENV === 'production';
-const allowedCorsOrigins = (process.env.CORS_ORIGIN || '')
+const normalizeOrigin = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    try {
+        return new URL(raw).origin;
+    } catch {
+        return raw.replace(/\/+$/, '');
+    }
+};
+
+const appBaseUrl = String(process.env.APP_BASE_URL || '').trim();
+const corsOriginsFromEnv = String(process.env.CORS_ORIGIN || '')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => normalizeOrigin(origin))
     .filter(Boolean);
+
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedCorsOrigins = Array.from(
+    new Set([
+        ...corsOriginsFromEnv,
+        normalizeOrigin(appBaseUrl),
+    ].filter(Boolean))
+);
+let warnedCorsFallback = false;
 
 const corsOptions = {
     origin: (origin, callback) => {
         // Allow non-browser clients (curl/postman/server-to-server).
         if (!origin) return callback(null, true);
-        // In local/dev, allow all if CORS_ORIGIN is not configured.
-        if (!isProduction && allowedCorsOrigins.length === 0) return callback(null, true);
-        if (allowedCorsOrigins.includes(origin)) return callback(null, true);
+        const normalizedRequestOrigin = normalizeOrigin(origin);
+        if (allowedCorsOrigins.includes(normalizedRequestOrigin)) return callback(null, true);
+        // Fallback to avoid hard outage when CORS env is missing.
+        if (allowedCorsOrigins.length === 0) {
+            if (!warnedCorsFallback) {
+                warnedCorsFallback = true;
+                console.warn('CORS_ORIGIN no configurado; se permite cualquier origen temporalmente.');
+            }
+            return callback(null, true);
+        }
         return callback(new Error('CORS_ORIGIN_DENIED'));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -38,7 +64,6 @@ const DAILY_QUIZ_LIMIT = 2;
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30);
 const AUTH_RATE_LIMIT_WINDOW_MS = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 1000 * 60 * 15);
 const AUTH_RATE_LIMIT_MAX_REQUESTS = Number(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || 10);
-const appBaseUrl = process.env.APP_BASE_URL || '';
 const ADMIN_USER_RULE = {
     id: 1,
     name: 'Jon',
